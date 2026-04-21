@@ -14,7 +14,7 @@ Rules:
 
 ## Foundation
 
-1. [ ] Create `docs/explanation/contiguous-input-model.md`.
+1. [x] Create `docs/explanation/contiguous-input-model.md`.
    Define the first intended shapes for input state, cursor movement, byte offset, bit offset, and failure position.
 2. [ ] Replace the placeholder core with the minimum low-level contiguous-input model.
    Keep only the essential types for position, parse error, and a contiguous-input runner.

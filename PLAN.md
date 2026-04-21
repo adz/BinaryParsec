@@ -12,13 +12,12 @@ Documentation is being organized around the Divio split, with current design not
 
 The current sequence is:
 
-1. define the contiguous-input model in an explanation doc
-2. replace the placeholder core with the minimum low-level model
-3. add the first primitive read operations and tests
-4. add the thinnest useful composition layer
-5. pressure the design with PNG
-6. pressure the design with Modbus RTU
-7. use CAN as the next protocol pressure test once the first two slices prove the core
+1. replace the placeholder core with the minimum low-level model
+2. add the first primitive read operations and tests
+3. add the thinnest useful composition layer
+4. pressure the design with PNG
+5. pressure the design with Modbus RTU
+6. use CAN as the next protocol pressure test once the first two slices prove the core
 
 ## Why This Order
 
@@ -37,7 +36,6 @@ The current sequence is:
 
 ## Planned First Deliverables
 
-- `docs/explanation/contiguous-input-model.md`
 - a minimal contiguous-input parser core
 - primitive parsing tests
 - a small PNG parser slice
