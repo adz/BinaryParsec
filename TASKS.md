@@ -18,7 +18,7 @@ Rules:
    Define the first intended shapes for input state, cursor movement, byte offset, bit offset, and failure position.
 2. [x] Replace the placeholder core with the minimum low-level contiguous-input model.
    Keep only the essential types for position, parse error, and a contiguous-input runner.
-3. [ ] Implement `byte`, `peekByte`, `skip`, `take`, `u16be`, `u16le`, and one bit-reading primitive.
+3. [x] Implement `byte`, `peekByte`, `skip`, `take`, `u16be`, `u16le`, and one bit-reading primitive.
 4. [ ] Add tests for the first primitive operations.
    Cover successful reads, bounds failures, and byte/bit offset reporting.
 5. [ ] Add the thinnest useful composition layer.
