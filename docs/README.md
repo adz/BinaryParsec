@@ -8,3 +8,4 @@ The repository follows the Divio documentation split.
 - [Explanation](explanation/README.md)
 
 Current architectural and design notes live under `docs/explanation/`.
+Generated API reference inputs are staged under `artifacts/api-docs/` during build.

@@ -54,7 +54,8 @@ The current sequence is:
 - Modbus RTU validation coverage now covers minimum-frame guards, CRC mismatch reporting, and offset-aware diagnostics
 - the public core modules and consumer-facing record types now carry purpose-and-fit comments for generated docs
 - the public API surface now carries concise comments where signatures alone were not enough
-- the next task is to ensure generated API docs are supported by the project structure
+- builds now stage assemblies plus XML doc files under `artifacts/api-docs/` so generated API reference can consume stable inputs without mixing generated output into the source docs tree
+- the next task is to confirm the zero-allocation hot path over `ReadOnlySpan<byte>`
 
 ## Update Rule
 

@@ -1,0 +1,21 @@
+<Project>
+
+  <PropertyGroup>
+    <ApiDocsArtifactsRoot>$(MSBuildThisFileDirectory)artifacts/api-docs/$(MSBuildProjectName)</ApiDocsArtifactsRoot>
+  </PropertyGroup>
+
+  <Target Name="StageApiDocsArtifacts"
+          AfterTargets="Build"
+          Condition="'$(GenerateDocumentationFile)' == 'true' and Exists('$(TargetPath)') and Exists('$(DocumentationFile)')">
+    <ItemGroup>
+      <ApiDocsArtifacts Include="$(TargetPath)" />
+      <ApiDocsArtifacts Include="$(DocumentationFile)" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(ApiDocsArtifactsRoot)" />
+    <Copy SourceFiles="@(ApiDocsArtifacts)"
+          DestinationFolder="$(ApiDocsArtifactsRoot)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>
