@@ -26,7 +26,7 @@ Rules:
 
 ## First Real Consumers
 
-6. [ ] Create the initial PNG parser slice.
+6. [x] Create the initial PNG parser slice.
    Parse the file signature, chunk envelope, chunk length, and payload boundaries.
 7. [ ] Add validation coverage for the first PNG slice.
    Cover invalid signature, truncated chunk envelope, and invalid length handling.

@@ -27,6 +27,22 @@ type ParseResult<'T> = Result<'T, ParseError>
 
 type ContiguousParser<'T> = delegate of ReadOnlySpan<byte> * ParsePosition -> ParseResult<'T * ParsePosition>
 
+[<Struct; IsReadOnlyAttribute>]
+type PngChunkEnvelope =
+    {
+        Length: uint32
+        ChunkType: ByteSlice
+        Payload: ByteSlice
+        Crc: ByteSlice
+    }
+
+[<Struct; IsReadOnlyAttribute>]
+type PngSlice =
+    {
+        Signature: ByteSlice
+        FirstChunk: PngChunkEnvelope
+    }
+
 type ContiguousParserBuilder() =
     member _.Bind(parser: ContiguousParser<'T>, binder: 'T -> ContiguousParser<'U>) : ContiguousParser<'U> =
         ContiguousParser<'U>(fun input position ->
@@ -223,6 +239,23 @@ module Contiguous =
 
                     succeed value (advanceBytes 2 position))
 
+    let u32be =
+        ContiguousParser<uint32>(fun input position ->
+            match requireByteAligned position with
+            | Error error -> Error error
+            | Ok() ->
+                match requireBytes 4 input position with
+                | Error error -> Error error
+                | Ok() ->
+                    let start = position.ByteOffset
+                    let value =
+                        (uint32 input[start] <<< 24)
+                        ||| (uint32 input[start + 1] <<< 16)
+                        ||| (uint32 input[start + 2] <<< 8)
+                        ||| uint32 input[start + 3]
+
+                    succeed value (advanceBytes 4 position))
+
     let bit =
         ContiguousParser<bool>(fun input position ->
             match requireBytes 1 input position with
@@ -232,3 +265,79 @@ module Contiguous =
                 let shift = 7 - position.BitOffset
                 let value = ((current >>> shift) &&& 1uy) = 1uy
                 succeed value (advanceBits 1 position))
+
+[<RequireQualifiedAccess>]
+module Png =
+    let private maxSupportedChunkLength = uint32 Int32.MaxValue - 4u
+
+    let private signatureBytes =
+        [| 0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy |]
+
+    let private invalidSignatureMessage =
+        "Input does not start with the PNG file signature."
+
+    let private invalidLengthMessage =
+        "PNG chunk length exceeds supported contiguous input size."
+
+    let signature =
+        ContiguousParser<ByteSlice>(fun input position ->
+            let signatureParser = Contiguous.take signatureBytes.Length
+
+            match signatureParser.Invoke(input, position) with
+            | Error error -> Error error
+            | Ok(slice, nextPosition) ->
+                let actual = ByteSlice.asSpan input slice
+                let mutable matches = true
+                let mutable index = 0
+
+                while matches && index < signatureBytes.Length do
+                    if actual[index] <> signatureBytes[index] then
+                        matches <- false
+
+                    index <- index + 1
+
+                if matches then
+                    Ok(slice, nextPosition)
+                else
+                    Contiguous.failAt position invalidSignatureMessage)
+
+    let chunkEnvelope =
+        ContiguousParser<PngChunkEnvelope>(fun input position ->
+            match Contiguous.u32be.Invoke(input, position) with
+            | Error error -> Error error
+            | Ok(length, afterLength) ->
+                let chunkTypeParser = Contiguous.take 4
+
+                match chunkTypeParser.Invoke(input, afterLength) with
+                | Error error -> Error error
+                | Ok(chunkType, afterChunkType) ->
+                    if length > maxSupportedChunkLength then
+                        Contiguous.failAt position invalidLengthMessage
+                    else
+                        let payloadParser = Contiguous.take (int length)
+
+                        match payloadParser.Invoke(input, afterChunkType) with
+                        | Error error -> Error error
+                        | Ok(payload, afterPayload) ->
+                            let crcParser = Contiguous.take 4
+
+                            match crcParser.Invoke(input, afterPayload) with
+                            | Error error -> Error error
+                            | Ok(crc, nextPosition) ->
+                                Ok(
+                                    { Length = length
+                                      ChunkType = chunkType
+                                      Payload = payload
+                                      Crc = crc },
+                                    nextPosition
+                                ))
+
+    let initialSlice =
+        Contiguous.parse {
+            let! parsedSignature = signature
+            let! firstChunk = chunkEnvelope
+
+            return
+                { Signature = parsedSignature
+                  FirstChunk = firstChunk }
+        }

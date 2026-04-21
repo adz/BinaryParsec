@@ -65,6 +65,9 @@ let u16ReadsRespectEndianness () =
     invoke Contiguous.u16le [| 0x12uy; 0x34uy |] ParsePosition.origin
     |> expectSuccess "u16le reads little-endian" 0x3412us (ParsePosition.create 2 0)
 
+    invoke Contiguous.u32be [| 0x12uy; 0x34uy; 0x56uy; 0x78uy |] ParsePosition.origin
+    |> expectSuccess "u32be reads big-endian" 0x12345678u (ParsePosition.create 4 0)
+
 let bitReadsAdvanceAcrossByteBoundary () =
     let input = [| 0b1010_0001uy; 0b0100_0000uy |]
 

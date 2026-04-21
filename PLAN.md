@@ -48,7 +48,8 @@ The current sequence is:
 - primitive operation coverage now validates successful reads, bounds failures, and offset reporting
 - the core now has a minimal composition layer with `map`, `bind`, small sequencing helpers, and a computation expression entry point
 - sequencing coverage now validates composed reads and later-stage failure offsets
-- the next task is to pressure the core with the first PNG parser slice
+- the core now includes the first PNG parser slice for the file signature and one chunk envelope with zero-copy payload boundaries
+- the next task is to add validation coverage for invalid PNG signatures, truncated chunk envelopes, and invalid lengths
 
 ## Update Rule
 
