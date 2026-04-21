@@ -16,7 +16,7 @@ Rules:
 
 1. [x] Create `docs/explanation/contiguous-input-model.md`.
    Define the first intended shapes for input state, cursor movement, byte offset, bit offset, and failure position.
-2. [ ] Replace the placeholder core with the minimum low-level contiguous-input model.
+2. [x] Replace the placeholder core with the minimum low-level contiguous-input model.
    Keep only the essential types for position, parse error, and a contiguous-input runner.
 3. [ ] Implement `byte`, `peekByte`, `skip`, `take`, `u16be`, `u16le`, and one bit-reading primitive.
 4. [ ] Add tests for the first primitive operations.

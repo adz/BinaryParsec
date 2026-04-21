@@ -12,12 +12,11 @@ Documentation is being organized around the Divio split, with current design not
 
 The current sequence is:
 
-1. replace the placeholder core with the minimum low-level model
-2. add the first primitive read operations and tests
-3. add the thinnest useful composition layer
-4. pressure the design with PNG
-5. pressure the design with Modbus RTU
-6. use CAN as the next protocol pressure test once the first two slices prove the core
+1. add the first primitive read operations and tests
+2. add the thinnest useful composition layer
+3. pressure the design with PNG
+4. pressure the design with Modbus RTU
+5. use CAN as the next protocol pressure test once the first two slices prove the core
 
 ## Why This Order
 
@@ -40,6 +39,12 @@ The current sequence is:
 - primitive parsing tests
 - a small PNG parser slice
 - a small Modbus RTU parser slice
+
+## Current Status
+
+- the placeholder `SpanParser` shell has been replaced with the minimum contiguous-input runner
+- the core now models parser state explicitly as `ReadOnlySpan<byte>` plus `ParsePosition`
+- the next task is to add the first byte and bit primitives on top of that runner
 
 ## Update Rule
 
