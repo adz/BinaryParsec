@@ -45,7 +45,8 @@ The current sequence is:
 - the placeholder `SpanParser` shell has been replaced with the minimum contiguous-input runner
 - the core now models parser state explicitly as `ReadOnlySpan<byte>` plus `ParsePosition`
 - the first byte, endian, slice, and bit primitives now sit on top of that runner
-- the next task is to add validation coverage for the first primitive operations
+- primitive operation coverage now validates successful reads, bounds failures, and offset reporting
+- the next task is to add the thinnest useful composition layer
 
 ## Update Rule
 
