@@ -18,7 +18,7 @@ let private assertSequenceEqual name (expected: byte array) (actual: ReadOnlySpa
 
 let private expectSuccess name expectedValue expectedPosition result =
     match result with
-    | Ok(value, position) ->
+    | Ok(struct (value, position)) ->
         assertEqual $"{name} value" expectedValue value
         assertEqual $"{name} position" expectedPosition position
     | Error error ->
@@ -26,7 +26,7 @@ let private expectSuccess name expectedValue expectedPosition result =
 
 let private expectError name expectedMessage expectedPosition result =
     match result with
-    | Ok(value, position) ->
+    | Ok(struct (value, position)) ->
         fail $"%s{name}: expected error, got value %A{value} at %A{position}"
     | Error error ->
         assertEqual $"{name} message" expectedMessage error.Message

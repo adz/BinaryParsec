@@ -55,7 +55,8 @@ The current sequence is:
 - the public core modules and consumer-facing record types now carry purpose-and-fit comments for generated docs
 - the public API surface now carries concise comments where signatures alone were not enough
 - builds now stage assemblies plus XML doc files under `artifacts/api-docs/` so generated API reference can consume stable inputs without mixing generated output into the source docs tree
-- the next task is to confirm the zero-allocation hot path over `ReadOnlySpan<byte>`
+- successful `ReadOnlySpan<byte>` hot paths now stay allocation-free for primitive byte/slice reads plus the first PNG and Modbus RTU slices, with a dedicated regression script checking `GC.GetAllocatedBytesForCurrentThread`
+- the next task is to confirm the protocol-layer C# facade shape without distorting the core
 
 ## Update Rule
 

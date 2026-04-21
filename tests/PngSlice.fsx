@@ -18,7 +18,7 @@ let private assertSequenceEqual name (expected: byte array) (actual: ReadOnlySpa
 
 let private expectSuccess name expectedValue expectedPosition result =
     match result with
-    | Ok(value, position) ->
+    | Ok(struct (value, position)) ->
         assertEqual $"{name} value" expectedValue value
         assertEqual $"{name} position" expectedPosition position
     | Error error ->
@@ -26,7 +26,7 @@ let private expectSuccess name expectedValue expectedPosition result =
 
 let private expectError name expectedMessage expectedPosition result =
     match result with
-    | Ok(value, position) ->
+    | Ok(struct (value, position)) ->
         fail $"%s{name}: expected error, got value %A{value} at %A{position}"
     | Error error ->
         assertEqual $"{name} message" expectedMessage error.Message
@@ -45,7 +45,7 @@ let private input =
 
 let signatureParserMatchesExactPngBytes () =
     match Png.signature.Invoke(ReadOnlySpan<byte>(input), ParsePosition.origin) with
-    | Ok(slice, position) ->
+    | Ok(struct (slice, position)) ->
         assertEqual "signature slice" (ByteSlice.create 0 8) slice
         assertEqual "signature position" (ParsePosition.create 8 0) position
         assertSequenceEqual
@@ -57,7 +57,7 @@ let signatureParserMatchesExactPngBytes () =
 
 let chunkEnvelopeCapturesLengthTypePayloadAndCrcSlices () =
     match Png.chunkEnvelope.Invoke(ReadOnlySpan<byte>(input), ParsePosition.create 8 0) with
-    | Ok(chunk, position) ->
+    | Ok(struct (chunk, position)) ->
         assertEqual "chunk length" 13u chunk.Length
         assertEqual "chunk type slice" (ByteSlice.create 12 4) chunk.ChunkType
         assertEqual "chunk payload slice" (ByteSlice.create 16 13) chunk.Payload

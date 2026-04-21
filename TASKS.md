@@ -44,7 +44,7 @@ Rules:
 
 ## Validation
 
-14. [ ] Confirm the zero-allocation hot path over `ReadOnlySpan<byte>`.
+14. [x] Confirm the zero-allocation hot path over `ReadOnlySpan<byte>`.
 15. [ ] Confirm the protocol-layer C# facade shape without distorting the core.
 16. [ ] Review completed tasks and compact or remove obsolete detail that is already captured elsewhere in the repo.
 

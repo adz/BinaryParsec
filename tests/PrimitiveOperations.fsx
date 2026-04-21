@@ -18,7 +18,7 @@ let private assertSequenceEqual name (expected: byte array) (actual: ReadOnlySpa
 
 let private expectSuccess name expectedValue expectedPosition result =
     match result with
-    | Ok(value, position) ->
+    | Ok(struct (value, position)) ->
         assertEqual $"{name} value" expectedValue value
         assertEqual $"{name} position" expectedPosition position
     | Error error ->
@@ -26,7 +26,7 @@ let private expectSuccess name expectedValue expectedPosition result =
 
 let private expectFailure name expectedPosition expectedMessage result =
     match result with
-    | Ok(value, position) ->
+    | Ok(struct (value, position)) ->
         fail $"%s{name}: expected failure, got value %A{value} at %A{position}"
     | Error error ->
         assertEqual $"{name} position" expectedPosition error.Position
@@ -51,7 +51,7 @@ let takeReturnsSliceAtCurrentOffset () =
     let input = [| 0x10uy; 0x20uy; 0x30uy; 0x40uy |]
 
     match invoke (Contiguous.take 2) input (ParsePosition.create 1 0) with
-    | Ok(slice, position) ->
+    | Ok(struct (slice, position)) ->
         assertEqual "take slice" (ByteSlice.create 1 2) slice
         assertEqual "take position" (ParsePosition.create 3 0) position
         assertSequenceEqual "take slice contents" [| 0x20uy; 0x30uy |] (ByteSlice.asSpan (ReadOnlySpan<byte>(input)) slice)

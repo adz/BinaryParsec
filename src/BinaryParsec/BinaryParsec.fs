@@ -37,9 +37,9 @@ type ParseResult<'T> = Result<'T, ParseError>
 
 /// Represents a parser that reads from contiguous binary input and advances a shared cursor.
 ///
-/// This is the low-level parser shape that the primitive and combinator layer
-/// build on before protocol-specific packages add friendlier entry points.
-type ContiguousParser<'T> = delegate of ReadOnlySpan<byte> * ParsePosition -> ParseResult<'T * ParsePosition>
+/// The success path carries its value and next position in a struct tuple so
+/// repeated span-based reads can stay allocation-free.
+type ContiguousParser<'T> = delegate of ReadOnlySpan<byte> * ParsePosition -> ParseResult<struct ('T * ParsePosition)>
 
 /// Captures the byte boundaries of one PNG chunk within the original input.
 [<Struct; IsReadOnlyAttribute>]
@@ -83,19 +83,19 @@ type ContiguousParserBuilder() =
     member _.Bind(parser: ContiguousParser<'T>, binder: 'T -> ContiguousParser<'U>) : ContiguousParser<'U> =
         ContiguousParser<'U>(fun input position ->
             match parser.Invoke(input, position) with
-            | Ok(value, nextPosition) ->
+            | Ok(struct (value, nextPosition)) ->
                 let nextParser = binder value
                 nextParser.Invoke(input, nextPosition)
             | Error error -> Error error)
 
     member _.Return(value: 'T) : ContiguousParser<'T> =
-        ContiguousParser<'T>(fun _ position -> Ok(value, position))
+        ContiguousParser<'T>(fun _ position -> Ok(struct (value, position)))
 
     member _.ReturnFrom(parser: ContiguousParser<'T>) : ContiguousParser<'T> =
         parser
 
     member _.Zero() : ContiguousParser<unit> =
-        ContiguousParser<unit>(fun _ position -> Ok((), position))
+        ContiguousParser<unit>(fun _ position -> Ok(struct ((), position)))
 
 /// Helpers for creating and validating binary cursor positions.
 [<RequireQualifiedAccess>]
@@ -171,18 +171,45 @@ module Contiguous =
         { ByteOffset = position.ByteOffset + (totalBits / 8)
           BitOffset = totalBits % 8 }
 
+    /// Returns a successful parser result without advancing the cursor.
+    let succeed value position : ParseResult<struct ('T * ParsePosition)> =
+        Ok(struct (value, position))
+
+    let internal takeAt count (input: ReadOnlySpan<byte>) position =
+        match requireByteAligned position with
+        | Error error -> Error error
+        | Ok() ->
+            match requireBytes count input position with
+            | Error error -> Error error
+            | Ok() ->
+                let slice = ByteSlice.create position.ByteOffset count
+                succeed slice (advanceBytes count position)
+
+    let internal u32beAt (input: ReadOnlySpan<byte>) position =
+        match requireByteAligned position with
+        | Error error -> Error error
+        | Ok() ->
+            match requireBytes 4 input position with
+            | Error error -> Error error
+            | Ok() ->
+                let start = position.ByteOffset
+                let value =
+                    (uint32 input[start] <<< 24)
+                    ||| (uint32 input[start + 1] <<< 16)
+                    ||| (uint32 input[start + 2] <<< 8)
+                    ||| uint32 input[start + 3]
+
+                succeed value (advanceBytes 4 position)
+
     /// Runs a parser from the origin and returns only the parsed value.
     let run (parser: ContiguousParser<'T>) (input: ReadOnlySpan<byte>) : ParseResult<'T> =
-        parser.Invoke(input, ParsePosition.origin)
-        |> Result.map fst
+        match parser.Invoke(input, ParsePosition.origin) with
+        | Ok(struct (value, _)) -> Ok value
+        | Error error -> Error error
 
     /// Builds a failure at an explicit cursor position.
     let failAt position message : ParseResult<'T> =
         Error { Position = position; Message = message }
-
-    /// Returns a successful parser result without advancing the cursor.
-    let succeed value position : ParseResult<'T * ParsePosition> =
-        Ok(value, position)
 
     /// Lifts a value into a parser that consumes no input.
     let result value =
@@ -192,14 +219,14 @@ module Contiguous =
     let map mapping (source: ContiguousParser<'T>) =
         ContiguousParser<'U>(fun input position ->
             match source.Invoke(input, position) with
-            | Ok(value, nextPosition) -> succeed (mapping value) nextPosition
+            | Ok(struct (value, nextPosition)) -> succeed (mapping value) nextPosition
             | Error error -> Error error)
 
     /// Chooses the next parser from the previous parsed value.
     let bind (binder: 'T -> ContiguousParser<'U>) (source: ContiguousParser<'T>) =
         ContiguousParser<'U>(fun input position ->
             match source.Invoke(input, position) with
-            | Ok(value, nextPosition) ->
+            | Ok(struct (value, nextPosition)) ->
                 let nextParser = binder value
                 nextParser.Invoke(input, nextPosition)
             | Error error -> Error error)
@@ -259,15 +286,7 @@ module Contiguous =
         if count < 0 then
             invalidArg (nameof count) "Take count must be non-negative."
 
-        ContiguousParser<ByteSlice>(fun input position ->
-            match requireByteAligned position with
-            | Error error -> Error error
-            | Ok() ->
-                match requireBytes count input position with
-                | Error error -> Error error
-                | Ok() ->
-                    let slice = ByteSlice.create position.ByteOffset count
-                    succeed slice (advanceBytes count position))
+        ContiguousParser<ByteSlice>(fun input position -> takeAt count input position)
 
     /// Reads an unsigned 16-bit integer in big-endian byte order.
     let u16be =
@@ -303,21 +322,7 @@ module Contiguous =
 
     /// Reads an unsigned 32-bit integer in big-endian byte order.
     let u32be =
-        ContiguousParser<uint32>(fun input position ->
-            match requireByteAligned position with
-            | Error error -> Error error
-            | Ok() ->
-                match requireBytes 4 input position with
-                | Error error -> Error error
-                | Ok() ->
-                    let start = position.ByteOffset
-                    let value =
-                        (uint32 input[start] <<< 24)
-                        ||| (uint32 input[start + 1] <<< 16)
-                        ||| (uint32 input[start + 2] <<< 8)
-                        ||| uint32 input[start + 3]
-
-                    succeed value (advanceBytes 4 position))
+        ContiguousParser<uint32>(fun input position -> u32beAt input position)
 
     /// Reads one bit in most-significant-bit-first order.
     let bit =
@@ -347,11 +352,9 @@ module Png =
     /// Matches the 8-byte PNG file signature and returns its input slice.
     let signature =
         ContiguousParser<ByteSlice>(fun input position ->
-            let signatureParser = Contiguous.take signatureBytes.Length
-
-            match signatureParser.Invoke(input, position) with
+            match Contiguous.takeAt signatureBytes.Length input position with
             | Error error -> Error error
-            | Ok(slice, nextPosition) ->
+            | Ok(struct (slice, nextPosition)) ->
                 let actual = ByteSlice.asSpan input slice
                 let mutable matches = true
                 let mutable index = 0
@@ -363,52 +366,54 @@ module Png =
                     index <- index + 1
 
                 if matches then
-                    Ok(slice, nextPosition)
+                    Ok(struct (slice, nextPosition))
                 else
                     Contiguous.failAt position invalidSignatureMessage)
 
     /// Parses one PNG chunk envelope and returns zero-copy slices for its parts.
     let chunkEnvelope =
         ContiguousParser<PngChunkEnvelope>(fun input position ->
-            match Contiguous.u32be.Invoke(input, position) with
+            match Contiguous.u32beAt input position with
             | Error error -> Error error
-            | Ok(length, afterLength) ->
-                let chunkTypeParser = Contiguous.take 4
-
-                match chunkTypeParser.Invoke(input, afterLength) with
+            | Ok(struct (length, afterLength)) ->
+                match Contiguous.takeAt 4 input afterLength with
                 | Error error -> Error error
-                | Ok(chunkType, afterChunkType) ->
+                | Ok(struct (chunkType, afterChunkType)) ->
                     if length > maxSupportedChunkLength then
                         Contiguous.failAt position invalidLengthMessage
                     else
-                        let payloadParser = Contiguous.take (int length)
-
-                        match payloadParser.Invoke(input, afterChunkType) with
+                        match Contiguous.takeAt (int length) input afterChunkType with
                         | Error error -> Error error
-                        | Ok(payload, afterPayload) ->
-                            let crcParser = Contiguous.take 4
-
-                            match crcParser.Invoke(input, afterPayload) with
+                        | Ok(struct (payload, afterPayload)) ->
+                            match Contiguous.takeAt 4 input afterPayload with
                             | Error error -> Error error
-                            | Ok(crc, nextPosition) ->
+                            | Ok(struct (crc, nextPosition)) ->
                                 Ok(
-                                    { Length = length
-                                      ChunkType = chunkType
-                                      Payload = payload
-                                      Crc = crc },
-                                    nextPosition
+                                    struct (
+                                        { Length = length
+                                          ChunkType = chunkType
+                                          Payload = payload
+                                          Crc = crc },
+                                        nextPosition
+                                    )
                                 ))
 
     /// Parses the PNG signature followed by the first chunk.
     let initialSlice =
-        Contiguous.parse {
-            let! parsedSignature = signature
-            let! firstChunk = chunkEnvelope
-
-            return
-                { Signature = parsedSignature
-                  FirstChunk = firstChunk }
-        }
+        ContiguousParser<PngSlice>(fun input position ->
+            match signature.Invoke(input, position) with
+            | Error error -> Error error
+            | Ok(struct (parsedSignature, afterSignature)) ->
+                match chunkEnvelope.Invoke(input, afterSignature) with
+                | Error error -> Error error
+                | Ok(struct (firstChunk, nextPosition)) ->
+                    Ok(
+                        struct (
+                            { Signature = parsedSignature
+                              FirstChunk = firstChunk },
+                            nextPosition
+                        )
+                    ))
 
 /// The first Modbus RTU parser slice built on the shared contiguous core.
 [<RequireQualifiedAccess>]
@@ -456,12 +461,14 @@ module ModbusRtu =
                     let actual = computeCrc input frameBytes
 
                     Ok(
-                        { Address = input[position.ByteOffset]
-                          FunctionCode = input[position.ByteOffset + 1]
-                          Payload = payload
-                          Crc =
-                            { Expected = expected
-                              Actual = actual
-                              IsMatch = expected = actual } },
-                        ParsePosition.create input.Length 0
+                        struct (
+                            { Address = input[position.ByteOffset]
+                              FunctionCode = input[position.ByteOffset + 1]
+                              Payload = payload
+                              Crc =
+                                { Expected = expected
+                                  Actual = actual
+                                  IsMatch = expected = actual } },
+                            ParsePosition.create input.Length 0
+                        )
                     ))
