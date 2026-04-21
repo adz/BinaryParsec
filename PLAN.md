@@ -52,7 +52,8 @@ The current sequence is:
 - PNG validation coverage now covers invalid signatures, truncated chunk envelopes, and unsupported chunk lengths
 - the core now includes the first Modbus RTU parser slice for address, function code, payload boundaries, and parsed-versus-computed CRC results
 - Modbus RTU validation coverage now covers minimum-frame guards, CRC mismatch reporting, and offset-aware diagnostics
-- the next task is to add module and type comments where they clarify purpose and fit
+- the public core modules and consumer-facing record types now carry purpose-and-fit comments for generated docs
+- the next task is to add concise API comments where signatures alone are not enough
 
 ## Update Rule
 

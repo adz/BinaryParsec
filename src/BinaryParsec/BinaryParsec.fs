@@ -3,6 +3,10 @@ namespace BinaryParsec
 open System
 open System.Runtime.CompilerServices
 
+/// Tracks the current cursor location within contiguous binary input.
+///
+/// The core parser runner threads this position through every primitive so
+/// errors, byte reads, and bit reads all report against the same state model.
 [<Struct; IsReadOnlyAttribute>]
 type ParsePosition =
     {
@@ -10,6 +14,10 @@ type ParsePosition =
         BitOffset: int
     }
 
+/// Describes a contiguous region of the original input without copying bytes.
+///
+/// Higher-level protocol and format parsers return slices to keep the core
+/// runner span-based while still exposing payload boundaries to callers.
 [<Struct; IsReadOnlyAttribute>]
 type ByteSlice =
     {
@@ -17,16 +25,23 @@ type ByteSlice =
         Length: int
     }
 
+/// Carries an offset-aware parse failure from the contiguous-input core.
 type ParseError =
     {
         Position: ParsePosition
         Message: string
     }
 
+/// Represents the success or failure of a top-level parse.
 type ParseResult<'T> = Result<'T, ParseError>
 
+/// Represents a parser that reads from contiguous binary input and advances a shared cursor.
+///
+/// This is the low-level parser shape that the primitive and combinator layer
+/// build on before protocol-specific packages add friendlier entry points.
 type ContiguousParser<'T> = delegate of ReadOnlySpan<byte> * ParsePosition -> ParseResult<'T * ParsePosition>
 
+/// Captures the byte boundaries of one PNG chunk within the original input.
 [<Struct; IsReadOnlyAttribute>]
 type PngChunkEnvelope =
     {
@@ -36,6 +51,7 @@ type PngChunkEnvelope =
         Crc: ByteSlice
     }
 
+/// Captures the PNG signature and first chunk as the initial PNG pressure-test slice.
 [<Struct; IsReadOnlyAttribute>]
 type PngSlice =
     {
@@ -43,6 +59,7 @@ type PngSlice =
         FirstChunk: PngChunkEnvelope
     }
 
+/// Reports the transmitted and computed CRC values for a Modbus RTU frame.
 [<Struct; IsReadOnlyAttribute>]
 type ModbusRtuCrcResult =
     {
@@ -51,6 +68,7 @@ type ModbusRtuCrcResult =
         IsMatch: bool
     }
 
+/// Represents one contiguous Modbus RTU frame over the shared binary core.
 [<Struct; IsReadOnlyAttribute>]
 type ModbusRtuFrame =
     {
@@ -60,6 +78,7 @@ type ModbusRtuFrame =
         Crc: ModbusRtuCrcResult
     }
 
+/// Provides the computation-expression surface over the low-level contiguous parser shape.
 type ContiguousParserBuilder() =
     member _.Bind(parser: ContiguousParser<'T>, binder: 'T -> ContiguousParser<'U>) : ContiguousParser<'U> =
         ContiguousParser<'U>(fun input position ->
@@ -78,6 +97,7 @@ type ContiguousParserBuilder() =
     member _.Zero() : ContiguousParser<unit> =
         ContiguousParser<unit>(fun _ position -> Ok((), position))
 
+/// Helpers for creating and validating binary cursor positions.
 [<RequireQualifiedAccess>]
 module ParsePosition =
     let origin = { ByteOffset = 0; BitOffset = 0 }
@@ -91,6 +111,7 @@ module ParsePosition =
 
         { ByteOffset = byteOffset; BitOffset = bitOffset }
 
+/// Helpers for constructing zero-copy byte ranges over contiguous input.
 [<RequireQualifiedAccess>]
 module ByteSlice =
     let create offset length =
@@ -105,6 +126,10 @@ module ByteSlice =
     let asSpan (input: ReadOnlySpan<byte>) (slice: ByteSlice) : ReadOnlySpan<byte> =
         input.Slice(slice.Offset, slice.Length)
 
+/// Primitive reads and minimal composition over the contiguous binary parser core.
+///
+/// This module is the thin layer between the cursor-based runner and
+/// higher-level format or protocol parsers.
 [<RequireQualifiedAccess>]
 module Contiguous =
     let private readFailure position bytesRequested =
@@ -283,6 +308,7 @@ module Contiguous =
                 let value = ((current >>> shift) &&& 1uy) = 1uy
                 succeed value (advanceBits 1 position))
 
+/// The first PNG-focused parsers that pressure the contiguous core with a real format.
 [<RequireQualifiedAccess>]
 module Png =
     let private maxSupportedChunkLength = uint32 Int32.MaxValue - 4u
@@ -359,6 +385,7 @@ module Png =
                   FirstChunk = firstChunk }
         }
 
+/// The first Modbus RTU parser slice built on the shared contiguous core.
 [<RequireQualifiedAccess>]
 module ModbusRtu =
     let private minimumFrameLength = 4

@@ -38,7 +38,7 @@ Rules:
 ## Documentation
 
 10. [x] Create the initial Divio folder structure under `docs/`.
-11. [ ] Add module/type comments where they explain purpose and fit.
+11. [x] Add module/type comments where they explain purpose and fit.
 12. [ ] Add concise API comments where signatures alone are not enough.
 13. [ ] Ensure generated API docs are supported by the project structure.
 
