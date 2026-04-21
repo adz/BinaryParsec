@@ -49,7 +49,8 @@ The current sequence is:
 - the core now has a minimal composition layer with `map`, `bind`, small sequencing helpers, and a computation expression entry point
 - sequencing coverage now validates composed reads and later-stage failure offsets
 - the core now includes the first PNG parser slice for the file signature and one chunk envelope with zero-copy payload boundaries
-- the next task is to add validation coverage for invalid PNG signatures, truncated chunk envelopes, and invalid lengths
+- PNG validation coverage now covers invalid signatures, truncated chunk envelopes, and unsupported chunk lengths
+- the next task is to create the initial Modbus RTU parser slice
 
 ## Update Rule
 

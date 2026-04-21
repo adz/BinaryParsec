@@ -24,6 +24,14 @@ let private expectSuccess name expectedValue expectedPosition result =
     | Error error ->
         fail $"%s{name}: expected success, got %A{error}"
 
+let private expectError name expectedMessage expectedPosition result =
+    match result with
+    | Ok(value, position) ->
+        fail $"%s{name}: expected error, got value %A{value} at %A{position}"
+    | Error error ->
+        assertEqual $"{name} message" expectedMessage error.Message
+        assertEqual $"{name} position" expectedPosition error.Position
+
 let private input =
     [|
         0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy
@@ -74,10 +82,54 @@ let initialSliceParsesSignatureAndFirstChunk () =
         | Error error ->
             fail $"initial slice parses signature and first chunk: expected success, got %A{error}"
 
+let signatureRejectsInvalidMagicBytes () =
+    let invalidSignature =
+        [|
+            0x89uy; 0x50uy; 0x4Euy; 0x46uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy
+        |]
+
+    expectError
+        "signature rejects invalid magic bytes"
+        "Input does not start with the PNG file signature."
+        ParsePosition.origin
+        (Png.signature.Invoke(ReadOnlySpan<byte>(invalidSignature), ParsePosition.origin))
+
+let chunkEnvelopeReportsTruncatedPayloadAtPayloadStart () =
+    let truncatedPayload =
+        [|
+            0x00uy; 0x00uy; 0x00uy; 0x0Duy
+            0x49uy; 0x48uy; 0x44uy; 0x52uy
+            0x00uy; 0x00uy; 0x00uy; 0x01uy
+            0x00uy; 0x00uy; 0x00uy; 0x01uy
+            0x08uy; 0x02uy; 0x00uy; 0x00uy
+        |]
+
+    expectError
+        "chunk envelope reports truncated payload at payload start"
+        "Unexpected end of input while reading 13 byte(s)."
+        (ParsePosition.create 8 0)
+        (Png.chunkEnvelope.Invoke(ReadOnlySpan<byte>(truncatedPayload), ParsePosition.origin))
+
+let chunkEnvelopeRejectsUnsupportedLengthBeforeReadingPayload () =
+    let invalidLength =
+        [|
+            0x7Fuy; 0xFFuy; 0xFFuy; 0xFCuy
+            0x49uy; 0x48uy; 0x44uy; 0x52uy
+        |]
+
+    expectError
+        "chunk envelope rejects unsupported length before reading payload"
+        "PNG chunk length exceeds supported contiguous input size."
+        ParsePosition.origin
+        (Png.chunkEnvelope.Invoke(ReadOnlySpan<byte>(invalidLength), ParsePosition.origin))
+
 let tests =
     [ signatureParserMatchesExactPngBytes
       chunkEnvelopeCapturesLengthTypePayloadAndCrcSlices
-      initialSliceParsesSignatureAndFirstChunk ]
+      initialSliceParsesSignatureAndFirstChunk
+      signatureRejectsInvalidMagicBytes
+      chunkEnvelopeReportsTruncatedPayloadAtPayloadStart
+      chunkEnvelopeRejectsUnsupportedLengthBeforeReadingPayload ]
 
 for test in tests do
     test ()
