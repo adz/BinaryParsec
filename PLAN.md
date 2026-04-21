@@ -50,7 +50,8 @@ The current sequence is:
 - sequencing coverage now validates composed reads and later-stage failure offsets
 - the core now includes the first PNG parser slice for the file signature and one chunk envelope with zero-copy payload boundaries
 - PNG validation coverage now covers invalid signatures, truncated chunk envelopes, and unsupported chunk lengths
-- the next task is to create the initial Modbus RTU parser slice
+- the core now includes the first Modbus RTU parser slice for address, function code, payload boundaries, and parsed-versus-computed CRC results
+- the next task is to add validation coverage for Modbus RTU framing assumptions, CRC failures, and offset-aware diagnostics
 
 ## Update Rule
 

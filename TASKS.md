@@ -30,7 +30,7 @@ Rules:
    Parse the file signature, chunk envelope, chunk length, and payload boundaries.
 7. [x] Add validation coverage for the first PNG slice.
    Cover invalid signature, truncated chunk envelope, and invalid length handling.
-8. [ ] Create the initial Modbus RTU parser slice.
+8. [x] Create the initial Modbus RTU parser slice.
    Parse address, function code, payload bytes, and CRC result.
 9. [ ] Add validation coverage for the first Modbus RTU slice.
    Cover framing assumptions, CRC failures, and offset-aware diagnostics.

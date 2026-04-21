@@ -43,6 +43,23 @@ type PngSlice =
         FirstChunk: PngChunkEnvelope
     }
 
+[<Struct; IsReadOnlyAttribute>]
+type ModbusRtuCrcResult =
+    {
+        Expected: uint16
+        Actual: uint16
+        IsMatch: bool
+    }
+
+[<Struct; IsReadOnlyAttribute>]
+type ModbusRtuFrame =
+    {
+        Address: byte
+        FunctionCode: byte
+        Payload: ByteSlice
+        Crc: ModbusRtuCrcResult
+    }
+
 type ContiguousParserBuilder() =
     member _.Bind(parser: ContiguousParser<'T>, binder: 'T -> ContiguousParser<'U>) : ContiguousParser<'U> =
         ContiguousParser<'U>(fun input position ->
@@ -341,3 +358,57 @@ module Png =
                 { Signature = parsedSignature
                   FirstChunk = firstChunk }
         }
+
+[<RequireQualifiedAccess>]
+module ModbusRtu =
+    let private minimumFrameLength = 4
+
+    let private incompleteFrameMessage =
+        "Modbus RTU frame must contain address, function code, and CRC."
+
+    let private computeCrc (input: ReadOnlySpan<byte>) (slice: ByteSlice) =
+        let mutable crc = 0xFFFFus
+        let bytes = ByteSlice.asSpan input slice
+
+        for index = 0 to bytes.Length - 1 do
+            crc <- crc ^^^ uint16 bytes[index]
+
+            for _ = 0 to 7 do
+                if (crc &&& 0x0001us) = 0x0001us then
+                    crc <- (crc >>> 1) ^^^ 0xA001us
+                else
+                    crc <- crc >>> 1
+
+        crc
+
+    let frame =
+        ContiguousParser<ModbusRtuFrame>(fun input position ->
+            if position.BitOffset <> 0 then
+                Contiguous.failAt position "Byte-aligned primitive cannot run when the cursor is at a bit offset."
+            else
+                let remaining = input.Length - position.ByteOffset
+
+                if remaining < minimumFrameLength then
+                    Contiguous.failAt position incompleteFrameMessage
+                else
+                    let payloadLength = remaining - minimumFrameLength
+                    let crcOffset = position.ByteOffset + 2 + payloadLength
+
+                    let frameBytes = ByteSlice.create position.ByteOffset (remaining - 2)
+                    let payload = ByteSlice.create (position.ByteOffset + 2) payloadLength
+                    let expected =
+                        uint16 input[crcOffset]
+                        ||| (uint16 input[crcOffset + 1] <<< 8)
+
+                    let actual = computeCrc input frameBytes
+
+                    Ok(
+                        { Address = input[position.ByteOffset]
+                          FunctionCode = input[position.ByteOffset + 1]
+                          Payload = payload
+                          Crc =
+                            { Expected = expected
+                              Actual = actual
+                              IsMatch = expected = actual } },
+                        ParsePosition.create input.Length 0
+                    ))
