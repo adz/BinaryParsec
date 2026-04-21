@@ -1,0 +1,25 @@
+artifacts/
+bin/
+obj/
+TestResults/
+.codex
+
+# NuGet
+*.nupkg
+*.snupkg
+.packages/
+
+# .NET user-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDEs
+.vs/
+.idea/
+
+# Rider / ReSharper
+_ReSharper*/
+*.DotSettings.user
