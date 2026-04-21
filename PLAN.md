@@ -53,7 +53,8 @@ The current sequence is:
 - the core now includes the first Modbus RTU parser slice for address, function code, payload boundaries, and parsed-versus-computed CRC results
 - Modbus RTU validation coverage now covers minimum-frame guards, CRC mismatch reporting, and offset-aware diagnostics
 - the public core modules and consumer-facing record types now carry purpose-and-fit comments for generated docs
-- the next task is to add concise API comments where signatures alone are not enough
+- the public API surface now carries concise comments where signatures alone were not enough
+- the next task is to ensure generated API docs are supported by the project structure
 
 ## Update Rule
 

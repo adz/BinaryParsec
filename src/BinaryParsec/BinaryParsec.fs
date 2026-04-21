@@ -100,8 +100,10 @@ type ContiguousParserBuilder() =
 /// Helpers for creating and validating binary cursor positions.
 [<RequireQualifiedAccess>]
 module ParsePosition =
+    /// The start of contiguous input at byte 0, bit 0.
     let origin = { ByteOffset = 0; BitOffset = 0 }
 
+    /// Creates a validated cursor position within contiguous input.
     let create byteOffset bitOffset =
         if byteOffset < 0 then
             invalidArg (nameof byteOffset) "Byte offset must be non-negative."
@@ -114,6 +116,7 @@ module ParsePosition =
 /// Helpers for constructing zero-copy byte ranges over contiguous input.
 [<RequireQualifiedAccess>]
 module ByteSlice =
+    /// Creates a validated zero-copy slice descriptor.
     let create offset length =
         if offset < 0 then
             invalidArg (nameof offset) "Slice offset must be non-negative."
@@ -123,6 +126,7 @@ module ByteSlice =
 
         { Offset = offset; Length = length }
 
+    /// Resolves a slice descriptor back to a span over the original input.
     let asSpan (input: ReadOnlySpan<byte>) (slice: ByteSlice) : ReadOnlySpan<byte> =
         input.Slice(slice.Offset, slice.Length)
 
@@ -167,25 +171,31 @@ module Contiguous =
         { ByteOffset = position.ByteOffset + (totalBits / 8)
           BitOffset = totalBits % 8 }
 
+    /// Runs a parser from the origin and returns only the parsed value.
     let run (parser: ContiguousParser<'T>) (input: ReadOnlySpan<byte>) : ParseResult<'T> =
         parser.Invoke(input, ParsePosition.origin)
         |> Result.map fst
 
+    /// Builds a failure at an explicit cursor position.
     let failAt position message : ParseResult<'T> =
         Error { Position = position; Message = message }
 
+    /// Returns a successful parser result without advancing the cursor.
     let succeed value position : ParseResult<'T * ParsePosition> =
         Ok(value, position)
 
+    /// Lifts a value into a parser that consumes no input.
     let result value =
         ContiguousParser<'T>(fun _ position -> succeed value position)
 
+    /// Transforms a parser result without changing how much input is consumed.
     let map mapping (source: ContiguousParser<'T>) =
         ContiguousParser<'U>(fun input position ->
             match source.Invoke(input, position) with
             | Ok(value, nextPosition) -> succeed (mapping value) nextPosition
             | Error error -> Error error)
 
+    /// Chooses the next parser from the previous parsed value.
     let bind (binder: 'T -> ContiguousParser<'U>) (source: ContiguousParser<'T>) =
         ContiguousParser<'U>(fun input position ->
             match source.Invoke(input, position) with
@@ -194,17 +204,22 @@ module Contiguous =
                 nextParser.Invoke(input, nextPosition)
             | Error error -> Error error)
 
+    /// Sequences two parsers and returns both parsed values.
     let zip left right =
         bind (fun leftValue -> map (fun rightValue -> leftValue, rightValue) right) left
 
+    /// Runs two parsers and keeps the value produced by the right parser.
     let keepRight left right =
         bind (fun () -> right) left
 
+    /// Runs two parsers and keeps the value produced by the left parser.
     let keepLeft left right =
         bind (fun leftValue -> map (fun () -> leftValue) right) left
 
+    /// Computation-expression builder for contiguous parsers.
     let parse = ContiguousParserBuilder()
 
+    /// Reads one byte and advances to the next byte-aligned position.
     let ``byte`` =
         ContiguousParser<byte>(fun input position ->
             match requireByteAligned position with
@@ -216,6 +231,7 @@ module Contiguous =
                     let value = input[position.ByteOffset]
                     succeed value (advanceBytes 1 position))
 
+    /// Reads one byte without advancing the cursor.
     let peekByte =
         ContiguousParser<byte>(fun input position ->
             match requireByteAligned position with
@@ -225,6 +241,7 @@ module Contiguous =
                 | Error error -> Error error
                 | Ok() -> succeed input[position.ByteOffset] position)
 
+    /// Advances by a byte count without returning any data.
     let skip count =
         if count < 0 then
             invalidArg (nameof count) "Skip count must be non-negative."
@@ -237,6 +254,7 @@ module Contiguous =
                 | Error error -> Error error
                 | Ok() -> succeed () (advanceBytes count position))
 
+    /// Returns a zero-copy slice of the next `count` bytes.
     let take count =
         if count < 0 then
             invalidArg (nameof count) "Take count must be non-negative."
@@ -251,6 +269,7 @@ module Contiguous =
                     let slice = ByteSlice.create position.ByteOffset count
                     succeed slice (advanceBytes count position))
 
+    /// Reads an unsigned 16-bit integer in big-endian byte order.
     let u16be =
         ContiguousParser<uint16>(fun input position ->
             match requireByteAligned position with
@@ -266,6 +285,7 @@ module Contiguous =
 
                     succeed value (advanceBytes 2 position))
 
+    /// Reads an unsigned 16-bit integer in little-endian byte order.
     let u16le =
         ContiguousParser<uint16>(fun input position ->
             match requireByteAligned position with
@@ -281,6 +301,7 @@ module Contiguous =
 
                     succeed value (advanceBytes 2 position))
 
+    /// Reads an unsigned 32-bit integer in big-endian byte order.
     let u32be =
         ContiguousParser<uint32>(fun input position ->
             match requireByteAligned position with
@@ -298,6 +319,7 @@ module Contiguous =
 
                     succeed value (advanceBytes 4 position))
 
+    /// Reads one bit in most-significant-bit-first order.
     let bit =
         ContiguousParser<bool>(fun input position ->
             match requireBytes 1 input position with
@@ -322,6 +344,7 @@ module Png =
     let private invalidLengthMessage =
         "PNG chunk length exceeds supported contiguous input size."
 
+    /// Matches the 8-byte PNG file signature and returns its input slice.
     let signature =
         ContiguousParser<ByteSlice>(fun input position ->
             let signatureParser = Contiguous.take signatureBytes.Length
@@ -344,6 +367,7 @@ module Png =
                 else
                     Contiguous.failAt position invalidSignatureMessage)
 
+    /// Parses one PNG chunk envelope and returns zero-copy slices for its parts.
     let chunkEnvelope =
         ContiguousParser<PngChunkEnvelope>(fun input position ->
             match Contiguous.u32be.Invoke(input, position) with
@@ -375,6 +399,7 @@ module Png =
                                     nextPosition
                                 ))
 
+    /// Parses the PNG signature followed by the first chunk.
     let initialSlice =
         Contiguous.parse {
             let! parsedSignature = signature
@@ -408,6 +433,7 @@ module ModbusRtu =
 
         crc
 
+    /// Parses one contiguous Modbus RTU frame and reports the transmitted versus computed CRC.
     let frame =
         ContiguousParser<ModbusRtuFrame>(fun input position ->
             if position.BitOffset <> 0 then
