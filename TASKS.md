@@ -21,7 +21,7 @@ Rules:
 3. [x] Implement `byte`, `peekByte`, `skip`, `take`, `u16be`, `u16le`, and one bit-reading primitive.
 4. [x] Add tests for the first primitive operations.
    Cover successful reads, bounds failures, and byte/bit offset reporting.
-5. [ ] Add the thinnest useful composition layer.
+5. [x] Add the thinnest useful composition layer.
    Introduce only enough parser composition to sequence primitives cleanly.
 
 ## First Real Consumers

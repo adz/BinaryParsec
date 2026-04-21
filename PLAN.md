@@ -46,7 +46,9 @@ The current sequence is:
 - the core now models parser state explicitly as `ReadOnlySpan<byte>` plus `ParsePosition`
 - the first byte, endian, slice, and bit primitives now sit on top of that runner
 - primitive operation coverage now validates successful reads, bounds failures, and offset reporting
-- the next task is to add the thinnest useful composition layer
+- the core now has a minimal composition layer with `map`, `bind`, small sequencing helpers, and a computation expression entry point
+- sequencing coverage now validates composed reads and later-stage failure offsets
+- the next task is to pressure the core with the first PNG parser slice
 
 ## Update Rule
 

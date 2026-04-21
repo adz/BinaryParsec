@@ -121,6 +121,58 @@ let byteAlignedPrimitivesRejectBitOffsets () =
     invoke Contiguous.u16le [| 0xFFuy; 0x00uy |] offset
     |> expectFailure "u16le bit-offset guard" offset message
 
+let mapTransformsWithoutChangingCursorMovement () =
+    let parser =
+        Contiguous.map (fun value -> int value + 1) Contiguous.``byte``
+
+    invoke parser [| 0x2Auy; 0x7Fuy |] ParsePosition.origin
+    |> expectSuccess "map transforms value" 43 (ParsePosition.create 1 0)
+
+let zipSequencesPrimitiveReads () =
+    let parser = Contiguous.zip Contiguous.``byte`` Contiguous.``byte``
+
+    invoke parser [| 0x12uy; 0x34uy; 0x56uy |] ParsePosition.origin
+    |> expectSuccess "zip sequences reads" (0x12uy, 0x34uy) (ParsePosition.create 2 0)
+
+let keepHelpersPreserveRequestedSide () =
+    let keepLeftParser = Contiguous.keepLeft Contiguous.``byte`` (Contiguous.skip 1)
+    let keepRightParser = Contiguous.keepRight (Contiguous.skip 1) Contiguous.``byte``
+    let input = [| 0x10uy; 0x20uy; 0x30uy |]
+
+    invoke keepLeftParser input ParsePosition.origin
+    |> expectSuccess "keepLeft keeps first value" 0x10uy (ParsePosition.create 2 0)
+
+    invoke keepRightParser input ParsePosition.origin
+    |> expectSuccess "keepRight keeps second value" 0x20uy (ParsePosition.create 2 0)
+
+let computationExpressionSequencesPrimitivesCleanly () =
+    let parser =
+        Contiguous.parse {
+            let! marker = Contiguous.``byte``
+            do! Contiguous.skip 1
+            let! payload = Contiguous.u16be
+            return marker, payload
+        }
+
+    invoke parser [| 0xA5uy; 0x00uy; 0x12uy; 0x34uy |] ParsePosition.origin
+    |> expectSuccess
+        "computation expression sequences primitives"
+        (0xA5uy, 0x1234us)
+        (ParsePosition.create 4 0)
+
+let compositionFailureReportsTheLaterReadOffset () =
+    let parser =
+        Contiguous.parse {
+            do! Contiguous.skip 1
+            return! Contiguous.u16be
+        }
+
+    invoke parser [| 0xFFuy; 0x12uy |] ParsePosition.origin
+    |> expectFailure
+        "composition failure offset"
+        (ParsePosition.create 1 0)
+        "Unexpected end of input while reading 2 byte(s)."
+
 let tests =
     [ byteReadsAndAdvances
       peekByteLeavesCursorInPlace
@@ -129,7 +181,12 @@ let tests =
       u16ReadsRespectEndianness
       bitReadsAdvanceAcrossByteBoundary
       boundsFailuresReportExactOffsets
-      byteAlignedPrimitivesRejectBitOffsets ]
+      byteAlignedPrimitivesRejectBitOffsets
+      mapTransformsWithoutChangingCursorMovement
+      zipSequencesPrimitiveReads
+      keepHelpersPreserveRequestedSide
+      computationExpressionSequencesPrimitivesCleanly
+      compositionFailureReportsTheLaterReadOffset ]
 
 for test in tests do
     test ()

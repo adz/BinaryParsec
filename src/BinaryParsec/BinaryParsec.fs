@@ -27,6 +27,24 @@ type ParseResult<'T> = Result<'T, ParseError>
 
 type ContiguousParser<'T> = delegate of ReadOnlySpan<byte> * ParsePosition -> ParseResult<'T * ParsePosition>
 
+type ContiguousParserBuilder() =
+    member _.Bind(parser: ContiguousParser<'T>, binder: 'T -> ContiguousParser<'U>) : ContiguousParser<'U> =
+        ContiguousParser<'U>(fun input position ->
+            match parser.Invoke(input, position) with
+            | Ok(value, nextPosition) ->
+                let nextParser = binder value
+                nextParser.Invoke(input, nextPosition)
+            | Error error -> Error error)
+
+    member _.Return(value: 'T) : ContiguousParser<'T> =
+        ContiguousParser<'T>(fun _ position -> Ok(value, position))
+
+    member _.ReturnFrom(parser: ContiguousParser<'T>) : ContiguousParser<'T> =
+        parser
+
+    member _.Zero() : ContiguousParser<unit> =
+        ContiguousParser<unit>(fun _ position -> Ok((), position))
+
 [<RequireQualifiedAccess>]
 module ParsePosition =
     let origin = { ByteOffset = 0; BitOffset = 0 }
@@ -100,6 +118,34 @@ module Contiguous =
 
     let succeed value position : ParseResult<'T * ParsePosition> =
         Ok(value, position)
+
+    let result value =
+        ContiguousParser<'T>(fun _ position -> succeed value position)
+
+    let map mapping (source: ContiguousParser<'T>) =
+        ContiguousParser<'U>(fun input position ->
+            match source.Invoke(input, position) with
+            | Ok(value, nextPosition) -> succeed (mapping value) nextPosition
+            | Error error -> Error error)
+
+    let bind (binder: 'T -> ContiguousParser<'U>) (source: ContiguousParser<'T>) =
+        ContiguousParser<'U>(fun input position ->
+            match source.Invoke(input, position) with
+            | Ok(value, nextPosition) ->
+                let nextParser = binder value
+                nextParser.Invoke(input, nextPosition)
+            | Error error -> Error error)
+
+    let zip left right =
+        bind (fun leftValue -> map (fun rightValue -> leftValue, rightValue) right) left
+
+    let keepRight left right =
+        bind (fun () -> right) left
+
+    let keepLeft left right =
+        bind (fun leftValue -> map (fun () -> leftValue) right) left
+
+    let parse = ContiguousParserBuilder()
 
     let ``byte`` =
         ContiguousParser<byte>(fun input position ->
