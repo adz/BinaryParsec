@@ -1,0 +1,15 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/BinaryParsec/BinaryParsec.fsproj" />
+    <Project Path="src/BinaryParsec.Protocols.Png/BinaryParsec.Protocols.Png.fsproj" />
+    <Project Path="src/BinaryParsec.Protocols.Modbus/BinaryParsec.Protocols.Modbus.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BinaryParsec.Tests/BinaryParsec.Tests.fsproj" />
+  </Folder>
+</Solution>

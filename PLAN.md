@@ -4,7 +4,7 @@
 
 The project is still in the foundation stage.
 
-The immediate goal is to prove the contiguous-input core before adding broader parsing features or extra projects.
+The immediate goal is to keep proving the contiguous-input core while using separate protocol projects to validate the package boundary.
 
 The repository baseline now assumes the .NET 10 SDK and the standard repo-root `artifacts/` output layout.
 
@@ -29,7 +29,7 @@ The current sequence is:
 
 - Do not add stream support before the contiguous-input model is proven.
 - Do not add advanced combinators before real parsers need them.
-- Do not add extra projects before PNG and Modbus RTU show where the actual pressure is.
+- Keep protocol and format consumers outside the core project once they prove the boundary is warranted.
 - Do not add C#-specific compromises to the core before a protocol package needs them.
 - Keep build output in the repo-root `artifacts/` folder rather than project-local `bin/` and `obj/` paths.
 
@@ -42,21 +42,15 @@ The current sequence is:
 
 ## Current Status
 
-- the placeholder `SpanParser` shell has been replaced with the minimum contiguous-input runner
-- the core now models parser state explicitly as `ReadOnlySpan<byte>` plus `ParsePosition`
-- the first byte, endian, slice, and bit primitives now sit on top of that runner
-- primitive operation coverage now validates successful reads, bounds failures, and offset reporting
-- the core now has a minimal composition layer with `map`, `bind`, small sequencing helpers, and a computation expression entry point
-- sequencing coverage now validates composed reads and later-stage failure offsets
-- the core now includes the first PNG parser slice for the file signature and one chunk envelope with zero-copy payload boundaries
-- PNG validation coverage now covers invalid signatures, truncated chunk envelopes, and unsupported chunk lengths
-- the core now includes the first Modbus RTU parser slice for address, function code, payload boundaries, and parsed-versus-computed CRC results
-- Modbus RTU validation coverage now covers minimum-frame guards, CRC mismatch reporting, and offset-aware diagnostics
-- the public core modules and consumer-facing record types now carry purpose-and-fit comments for generated docs
-- the public API surface now carries concise comments where signatures alone were not enough
-- builds now stage assemblies plus XML doc files under `artifacts/api-docs/` so generated API reference can consume stable inputs without mixing generated output into the source docs tree
-- successful `ReadOnlySpan<byte>` hot paths now stay allocation-free for primitive byte/slice reads plus the first PNG and Modbus RTU slices, with a dedicated regression script checking `GC.GetAllocatedBytesForCurrentThread`
-- the next task is to confirm the protocol-layer C# facade shape without distorting the core
+- the core is now a contiguous `ReadOnlySpan<byte>` runner over explicit `ParsePosition`, with byte, endian, slice, and bit primitives
+- the composition layer is in place with `map`, `bind`, sequencing helpers, and a computation-expression entry point
+- the PNG and Modbus RTU slices now live in separate `BinaryParsec.Protocols.*` projects and are validated with offset-aware diagnostics
+- the public surface now carries the needed purpose-and-fit comments and concise API docs
+- builds stage assemblies and XML docs under `artifacts/api-docs/` for generated reference consumption
+- successful hot paths for the primitive, PNG, and Modbus RTU slices stay allocation-free
+- the protocol-layer C# direction is confirmed as thin `BinaryParsec.Protocols.*` facades over the F#-first core
+- test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
+- the next task is to pressure the core with CAN as the next protocol consumer
 
 ## Update Rule
 

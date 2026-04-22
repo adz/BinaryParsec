@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="PrimitiveOperationsTests.fs" />
+    <Compile Include="PngSliceTests.fs" />
+    <Compile Include="ModbusRtuSliceTests.fs" />
+    <Compile Include="ZeroAllocationHotPathTests.fs" />
+    <Compile Include="TestHost.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BinaryParsec\BinaryParsec.fsproj" />
+    <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Png\BinaryParsec.Protocols.Png.fsproj" />
+    <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Modbus\BinaryParsec.Protocols.Modbus.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="Unquote" Version="7.0.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

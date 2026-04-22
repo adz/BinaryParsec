@@ -19,6 +19,15 @@ The intended shape is:
 - `docs/`
   Explanation, reference, and planning material that keeps the implementation grounded.
 
+The current repo layout already follows that split:
+
+- `src/BinaryParsec`
+  Core cursor model, primitives, combinators, and diagnostics.
+- `src/BinaryParsec.Protocols.Png`
+  The PNG format pressure-test slice over the core.
+- `src/BinaryParsec.Protocols.Modbus`
+  The Modbus RTU protocol slice over the core.
+
 The architectural bias is a dual-layer design:
 
 - a low-level binary cursor and primitive layer

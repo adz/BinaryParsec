@@ -8,8 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="BinaryParsec.fs" />
+    <Compile Include="BinaryParsec.Protocols.Modbus.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BinaryParsec\BinaryParsec.fsproj" />
   </ItemGroup>
 
 </Project>

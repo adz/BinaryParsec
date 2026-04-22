@@ -45,10 +45,13 @@ Rules:
 ## Validation
 
 14. [x] Confirm the zero-allocation hot path over `ReadOnlySpan<byte>`.
-15. [ ] Confirm the protocol-layer C# facade shape without distorting the core.
-16. [ ] Review completed tasks and compact or remove obsolete detail that is already captured elsewhere in the repo.
+15. [x] Confirm the protocol-layer C# facade shape without distorting the core.
+16. [x] Review completed tasks and compact or remove obsolete detail that is already captured elsewhere in the repo.
 
 ## Repo Baseline
 
 17. [x] Move SDK build output to the standard repo-root `artifacts/` layout.
 18. [x] Upgrade the core project target framework to `net10.0`.
+19. [x] Use normal `dotnet test` execution for tests along with Unquote.
+20. [x] Split the PNG and Modbus slices into separate `BinaryParsec.Protocols.*` projects.
+   Keep the core project focused on generic parser primitives and wire tests through the new project references.
