@@ -122,6 +122,19 @@ module PrimitiveOperationsTests =
         |> expectSuccess 0b01000u (ParsePosition.create 2 0)
 
     [<Fact>]
+    let ``bitsLsbFirst reads packed fields across byte boundaries`` () =
+        let input = [| 0xEDuy; 0xCDuy; 0x01uy |]
+
+        invoke (Contiguous.bitsLsbFirst 1) input ParsePosition.origin
+        |> expectSuccess 1u (ParsePosition.create 0 1)
+
+        invoke (Contiguous.bitsLsbFirst 2) input (ParsePosition.create 0 1)
+        |> expectSuccess 2u (ParsePosition.create 0 3)
+
+        invoke (Contiguous.bitsLsbFirst 14) input (ParsePosition.create 0 3)
+        |> expectSuccess 0x39BDu (ParsePosition.create 2 1)
+
+    [<Fact>]
     let ``bounds failures report exact offsets`` () =
         invoke Contiguous.``byte`` [||] ParsePosition.origin
         |> expectFailure ParsePosition.origin "Unexpected end of input while reading 1 byte(s)."
@@ -136,6 +149,9 @@ module PrimitiveOperationsTests =
         |> expectFailure (ParsePosition.create 1 0) "Unexpected end of input while reading 1 byte(s)."
 
         invoke (Contiguous.bits 9) [| 0x80uy |] ParsePosition.origin
+        |> expectFailure ParsePosition.origin "Unexpected end of input while reading 9 bit(s)."
+
+        invoke (Contiguous.bitsLsbFirst 9) [| 0x80uy |] ParsePosition.origin
         |> expectFailure ParsePosition.origin "Unexpected end of input while reading 9 bit(s)."
 
         invoke Contiguous.varUInt64 [| 0x80uy |] ParsePosition.origin

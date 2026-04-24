@@ -24,7 +24,7 @@ Rules:
    Add only the bitfield helpers needed to parse identifier bits, control flags, and DLC correctly.
 6. [x] Cover varints and length-delimited payloads with a tiny Protocol Buffers wire-format snippet.
    Add only the varint, tag, and bounded payload helpers needed for one realistic field reader and unknown-field skipping.
-7. [ ] Cover arbitrary-width bit extraction with a tiny DEFLATE block-prelude snippet.
+7. [x] Cover arbitrary-width bit extraction with a tiny DEFLATE block-prelude snippet.
    Use it to validate bit ordering, non-byte-aligned reads, and compact flag parsing.
 8. [ ] Cover width/endian completeness and offset-based reads with a tiny ELF snippet.
    Add the missing fixed-width integer readers and the minimum offset/jump helpers needed for header-plus-table parsing.

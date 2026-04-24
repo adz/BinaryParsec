@@ -125,6 +125,11 @@ A parser that consumes the first byte successfully moves from byte offset `0` to
 
 The natural interpretation is most-significant-bit first within that byte unless a primitive explicitly documents a different bit ordering. The backend should track the location only. Bit numbering policy for extraction belongs to the bit primitive itself.
 
+That distinction now matters in both directions:
+
+- `Contiguous.bit` and `Contiguous.bits` read most-significant-bit first for layouts such as CAN register-style fields
+- `Contiguous.bitsLsbFirst` reads least-significant-bit first for packed layouts such as the DEFLATE block prelude
+
 Two rules matter here:
 
 - `BitOffset = 0` means the cursor is byte-aligned

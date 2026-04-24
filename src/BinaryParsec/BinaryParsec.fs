@@ -467,6 +467,37 @@ module Contiguous =
 
                 succeed value nextPosition)
 
+    /// Reads `count` bits in least-significant-bit-first order into an unsigned integer.
+    ///
+    /// This matches formats such as DEFLATE that pack low-order bits first
+    /// while still advancing through the same contiguous cursor model.
+    let bitsLsbFirst count =
+        if count < 1 || count > 32 then
+            invalidArg (nameof count) "Bit count must be between 1 and 32."
+
+        ContiguousParser<uint32>(fun input position ->
+            match requireBits count input position with
+            | Error error -> Error error
+            | Ok() ->
+                let mutable remaining = count
+                let mutable nextPosition = position
+                let mutable value = 0u
+                let mutable bitsRead = 0
+
+                while remaining > 0 do
+                    let current = input[nextPosition.ByteOffset]
+                    let availableInByte = 8 - nextPosition.BitOffset
+                    let takeCount = min remaining availableInByte
+                    let mask = (1 <<< takeCount) - 1
+                    let chunk = uint32 ((int current >>> nextPosition.BitOffset) &&& mask)
+
+                    value <- value ||| (chunk <<< bitsRead)
+                    nextPosition <- advanceBits takeCount nextPosition
+                    remaining <- remaining - takeCount
+                    bitsRead <- bitsRead + takeCount
+
+                succeed value nextPosition)
+
     /// Reads a varint length prefix and returns that many bytes as a zero-copy slice.
     let takeVarintPrefixed =
         ContiguousParser<ByteSlice>(fun input position ->

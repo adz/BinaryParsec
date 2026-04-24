@@ -61,7 +61,8 @@ The active sequence is:
 - test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
 - a tiny CAN classic controller-style header snippet now covers base-identifier extraction, packed control flags, and CAN classic DLC validation
 - a tiny Protocol Buffers wire-field snippet now covers varints, field tags, length-delimited payloads, and unknown-field skipping
-- the next task is to cover arbitrary-width bit extraction with a tiny DEFLATE block-prelude snippet
+- a tiny DEFLATE block-prelude snippet now covers least-significant-bit-first packed fields, arbitrary-width extraction, and non-byte-aligned reads
+- the next task is to cover width/endian completeness and offset-based reads with a tiny ELF snippet
 
 ## Snippet Ladder
 

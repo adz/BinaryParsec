@@ -34,6 +34,10 @@ let ``packed bit reads stay allocation free`` () =
     assertZeroAllocations (Contiguous.bits 11) [| 0xB4uy; 0x60uy |]
 
 [<Fact>]
+let ``lsb-first packed bit reads stay allocation free`` () =
+    assertZeroAllocations (Contiguous.bitsLsbFirst 14) [| 0xEDuy; 0xCDuy; 0x01uy |]
+
+[<Fact>]
 let ``zero copy slice read stays allocation free`` () =
     assertZeroAllocations (Contiguous.take 3) [| 0x10uy; 0x20uy; 0x30uy; 0x40uy |]
 
