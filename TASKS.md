@@ -32,7 +32,7 @@ Rules:
    Use it to prove shared payload parsing over a distinct transport frame without widening the public API prematurely.
 10. [x] Cover stateful byte-stream parsing with a tiny MIDI event snippet.
    Use it to pressure parser state and to inform the later incremental-input backend design.
-11. [ ] Flesh out docs in parallel with each snippet milestone.
+11. [x] Flesh out docs in parallel with each snippet milestone.
    Add one explanation page, one how-to, and the relevant reference updates whenever a new capability family lands.
 12. [ ] Return to full protocol and format packages once the common reading paths are mostly covered.
    Resume CAN, expand PNG, and broaden Modbus/other packages using the matured core rather than growing them ad hoc.

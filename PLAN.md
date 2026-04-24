@@ -53,6 +53,7 @@ The active sequence is:
 - `BinaryParsec.Protocols.Modbus` now exposes package-quality RTU parse entry points, stable owned frame models, and C#-friendly overloads
 - the public surface now carries the needed purpose-and-fit comments and concise API docs
 - Modbus package docs now cover RTU usage, package reference material, and the stable-facade versus low-level-parser split
+- the snippet ladder is now documented with capability rationale, a core snippet how-to, and a handwritten reference map for the relevant contiguous parser helpers
 - builds stage assemblies and XML docs under `artifacts/api-docs/` for generated reference consumption
 - successful hot paths for the primitive, PNG, and Modbus RTU slices stay allocation-free
 - fixed-shape core composition now has an allocation-free path through direct applicative combinators and `and!` computation-expression lowering
@@ -65,7 +66,7 @@ The active sequence is:
 - a tiny ELF header-plus-program-header snippet now covers 32-bit and 64-bit width reads, little-endian and big-endian selection, and absolute offset-based table lookups
 - a tiny Modbus TCP MBAP snippet now covers MBAP transport validation and shared Modbus PDU parsing over a distinct transport frame
 - a tiny MIDI channel-event stream snippet now covers delta-time VLQs, running status reuse, and state threaded across byte-stream events
-- the next task is to flesh out docs in parallel with the snippet milestones
+- the next task is to return to full protocol and format packages once the common reading paths are mostly covered
 
 ## Snippet Ladder
 

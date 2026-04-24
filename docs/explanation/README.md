@@ -7,3 +7,4 @@ Design notes and architecture rationale live here.
 - [C# Interop](CSHARP_INTEROP.md)
 - [Example Corpus](EXAMPLE-CORPUS.md)
 - [Modbus Package Shape](modbus-package-shape.md)
+- [Snippet Milestones And Core Coverage](snippet-milestones-and-core-coverage.md)
