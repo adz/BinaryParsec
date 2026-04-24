@@ -47,6 +47,8 @@ Agents must follow these design rules:
 - Prefer one public module, type, or class per file.
 - Only keep multiple public types in one file when they form a very small, tightly related family and splitting them would be clearly worse for readability.
 - When compactness and navigability conflict, prefer navigability.
+- Prefer computation expressions for parser composition above the primitive layer.
+- Fall back to manual parser chaining only when a measured hot path clearly justifies it or when precise position/error control would otherwise become less clear.
 
 ## Anti-Patterns
 
