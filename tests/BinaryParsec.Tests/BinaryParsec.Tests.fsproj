@@ -12,11 +12,13 @@
     <Compile Include="CanClassicSnippet.fs" />
     <Compile Include="DeflateBlockPreludeSnippet.fs" />
     <Compile Include="ElfSnippet.fs" />
+    <Compile Include="ModbusTcpMbapSnippet.fs" />
     <Compile Include="ProtocolBuffersWireSnippet.fs" />
     <Compile Include="PrimitiveOperationsTests.fs" />
     <Compile Include="CanClassicSnippetTests.fs" />
     <Compile Include="DeflateBlockPreludeSnippetTests.fs" />
     <Compile Include="ElfSnippetTests.fs" />
+    <Compile Include="ModbusTcpMbapSnippetTests.fs" />
     <Compile Include="ProtocolBuffersWireSnippetTests.fs" />
     <Compile Include="PngSliceTests.fs" />
     <Compile Include="ModbusRtuSliceTests.fs" />

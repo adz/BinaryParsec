@@ -63,7 +63,8 @@ The active sequence is:
 - a tiny Protocol Buffers wire-field snippet now covers varints, field tags, length-delimited payloads, and unknown-field skipping
 - a tiny DEFLATE block-prelude snippet now covers least-significant-bit-first packed fields, arbitrary-width extraction, and non-byte-aligned reads
 - a tiny ELF header-plus-program-header snippet now covers 32-bit and 64-bit width reads, little-endian and big-endian selection, and absolute offset-based table lookups
-- the next task is to cover transport-plus-payload layering with a tiny Modbus TCP MBAP snippet
+- a tiny Modbus TCP MBAP snippet now covers MBAP transport validation and shared Modbus PDU parsing over a distinct transport frame
+- the next task is to cover stateful byte-stream parsing with a tiny MIDI event snippet
 
 ## Snippet Ladder
 

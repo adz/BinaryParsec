@@ -28,7 +28,7 @@ Rules:
    Use it to validate bit ordering, non-byte-aligned reads, and compact flag parsing.
 8. [x] Cover width/endian completeness and offset-based reads with a tiny ELF snippet.
    Add the missing fixed-width integer readers and the minimum offset/jump helpers needed for header-plus-table parsing.
-9. [ ] Cover transport-plus-payload layering with a tiny Modbus TCP MBAP snippet.
+9. [x] Cover transport-plus-payload layering with a tiny Modbus TCP MBAP snippet.
    Use it to prove shared payload parsing over a distinct transport frame without widening the public API prematurely.
 10. [ ] Cover stateful byte-stream parsing with a tiny MIDI event snippet.
    Use it to pressure parser state and to inform the later incremental-input backend design.
