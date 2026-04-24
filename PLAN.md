@@ -2,46 +2,47 @@
 
 ## Current Direction
 
-The project is still in the foundation stage.
+The project is now moving from foundation work into coverage work.
 
-The immediate goal is to use the first production-ready protocol package to shape the next protocol and format work while keeping the contiguous-input core clean.
+The immediate goal is to cover the common binary reading paths by driving the core from tiny, real snippet parsers taken from real protocols and binary formats. Each snippet should justify one missing capability with the smallest realistic consumer. Once the core is mostly fleshed out, the project should return to full protocol and format packages and complete them to production quality.
 
 The repository baseline now assumes the .NET 10 SDK and the standard repo-root `artifacts/` output layout.
 
 Documentation is being organized around the Divio split, with current design notes under `docs/explanation/`.
 
-The current sequence is:
+The active sequence is:
 
-1. add the first primitive read operations and tests
-2. add the thinnest useful composition layer
-3. pressure the design with PNG
-4. pressure the design with Modbus RTU
-5. harden Modbus RTU into a package-quality public surface
-6. use CAN as the next protocol pressure test after the first production-ready protocol package is in place
+1. keep one production-ready protocol package in place as the quality bar
+2. add tiny snippet consumers that each force a missing reading path into the core
+3. document each newly justified capability in the same change
+4. return to full protocol and format packages once the common reading paths are mostly covered
 
 ## Why This Order
 
 - It keeps the core grounded in real binary parsing needs.
-- It proves the low-level model before stream support or broader abstractions appear.
-- It uses one non-protocol format and one industrial protocol to shape the next design decisions.
+- It lets the library add exactly the reading helpers that real formats require.
+- It keeps snippet work small enough to isolate one capability at a time.
 - It establishes one package-quality protocol surface before multiplying protocol coverage.
+- It prevents half-finished full protocol packages from driving premature API growth.
 - It keeps C# concerns at the protocol layer rather than distorting the core too early.
 
 ## Constraints
 
-- Do not add stream support before the contiguous-input model is proven.
-- Do not add advanced combinators before real parsers need them.
+- Do not add a core primitive until a real snippet clearly needs it.
+- Do not jump to full protocol completion when a smaller snippet can justify the next missing capability.
 - Keep protocol and format consumers outside the core project once they prove the boundary is warranted.
 - Do not add C#-specific compromises to the core before a protocol package needs them.
 - Keep build output in the repo-root `artifacts/` folder rather than project-local `bin/` and `obj/` paths.
-- Prefer production-ready protocol surfaces over adding more protocol slices.
+- Flesh out docs in the same sequence as the capability work so the repo stays teachable.
 
-## Planned First Deliverables
+## Coverage Targets
 
-- a minimal contiguous-input parser core
-- primitive parsing tests
-- a small PNG parser slice
-- a small Modbus RTU parser slice
+- fixed-width integer reads across common widths and endianness
+- multi-bit and packed-flag reads
+- bounded repetition and chunk iteration
+- varints and length-delimited payloads
+- offset-based reads and dependent layout parsing
+- backend-aware parsing guidance for eventual incremental input
 
 ## Current Status
 
@@ -55,7 +56,26 @@ The current sequence is:
 - successful hot paths for the primitive, PNG, and Modbus RTU slices stay allocation-free
 - the protocol-layer C# direction is confirmed as thin `BinaryParsec.Protocols.*` facades over the F#-first core
 - test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
-- the next task is to carry the production-package pattern forward into the next protocol consumer, starting with CAN
+- the next task is to build the snippet ladder that covers the remaining common binary reading paths before returning to full protocol completion
+
+## Snippet Ladder
+
+Use the smallest realistic snippet that proves each missing reading pattern:
+
+1. PNG chunk iterator
+   Drives repeated bounded reads, chunk iteration, and reusable magic matching.
+2. CAN classic frame header snippet
+   Drives multi-bit extraction, packed flags, and compact frame metadata.
+3. Protocol Buffers wire-field snippet
+   Drives varints, field tags, length-delimited payloads, and unknown-field skipping.
+4. DEFLATE block prelude snippet
+   Drives arbitrary-width bit extraction and bit-order correctness.
+5. ELF header and table-entry snippet
+   Drives width/endian coverage, offset-based reads, and dependent layout parsing.
+6. Modbus TCP MBAP snippet
+   Drives layered transport framing over shared payload parsing.
+7. MIDI event snippet
+   Drives stateful byte-stream parsing and informs later incremental-input design.
 
 ## Update Rule
 

@@ -81,20 +81,18 @@ This does not require citation noise everywhere, but it does require:
 - expressing important protocol and format rules in tests
 - using property tests or invariants where a grammar or structured definition makes that practical
 
-## First Pressure Tests
+## Capability Pressure
 
-The initial library shape should be tested by:
+The next stage should use tiny, real snippet parsers to justify the missing common binary reading paths one by one.
 
-- one non-protocol binary format with nested chunks
-- one industrial protocol with checksums
-- one bit-heavy frame format
-- one varint-driven format after the first protocol slices sharpen the core
+The preferred sequence is:
 
-The current preferred sequence is:
+1. PNG chunk iterator
+2. CAN classic frame header snippet
+3. Protocol Buffers wire-field snippet
+4. DEFLATE block-prelude snippet
+5. ELF header and table-entry snippet
+6. Modbus TCP MBAP snippet
+7. MIDI event snippet
 
-1. PNG
-2. Modbus RTU
-3. productionize the Modbus RTU package surface
-4. CAN
-5. Protocol Buffers wire parsing
-6. Modbus TCP
+After those snippets cover the common paths, the project should return to broader package completion with a more capable core.

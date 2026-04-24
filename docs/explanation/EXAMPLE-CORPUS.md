@@ -118,10 +118,23 @@ It puts pressure on the bit-level and compact-frame parts of the design before m
 
 ## Initial Ordered Implementation
 
-1. PNG
-2. Modbus RTU
-3. CAN
-4. Protocol Buffers wire parser
-5. Modbus TCP
+Use tiny real snippets first, then come back to full packages:
 
-That set gives good coverage across chunked formats, checksums, compact binary frame parsing, varints, and transport/payload layering.
+1. PNG chunk iterator snippet
+2. CAN classic frame header snippet
+3. Protocol Buffers wire-field snippet
+4. DEFLATE block-prelude snippet
+5. ELF header and table-entry snippet
+6. Modbus TCP MBAP snippet
+7. MIDI event snippet
+8. return to fuller PNG, CAN, and Modbus package work
+
+That ladder covers the common binary reading paths in a deliberate order:
+
+- repeated bounded reads and chunk iteration from PNG
+- packed flags and multi-bit extraction from CAN
+- varints and length-delimited fields from Protocol Buffers
+- arbitrary-width bit extraction from DEFLATE
+- width/endian completeness and offset-based parsing from ELF
+- transport/payload layering from Modbus TCP
+- stateful byte-stream parsing from MIDI
