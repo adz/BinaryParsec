@@ -71,7 +71,7 @@ module PrimitiveOperationsTests =
         |> expectFailure ParsePosition.origin "bad magic"
 
     [<Fact>]
-    let ``u16 and u32 reads respect endianness`` () =
+    let ``fixed-width integer reads respect endianness`` () =
         invoke Contiguous.u16be [| 0x12uy; 0x34uy |] ParsePosition.origin
         |> expectSuccess 0x1234us (ParsePosition.create 2 0)
 
@@ -80,6 +80,22 @@ module PrimitiveOperationsTests =
 
         invoke Contiguous.u32be [| 0x12uy; 0x34uy; 0x56uy; 0x78uy |] ParsePosition.origin
         |> expectSuccess 0x12345678u (ParsePosition.create 4 0)
+
+        invoke Contiguous.u32le [| 0x12uy; 0x34uy; 0x56uy; 0x78uy |] ParsePosition.origin
+        |> expectSuccess 0x78563412u (ParsePosition.create 4 0)
+
+        invoke Contiguous.u64be [| 0x01uy; 0x23uy; 0x45uy; 0x67uy; 0x89uy; 0xABuy; 0xCDuy; 0xEFuy |] ParsePosition.origin
+        |> expectSuccess 0x0123456789ABCDEFUL (ParsePosition.create 8 0)
+
+        invoke Contiguous.u64le [| 0x01uy; 0x23uy; 0x45uy; 0x67uy; 0x89uy; 0xABuy; 0xCDuy; 0xEFuy |] ParsePosition.origin
+        |> expectSuccess 0xEFCDAB8967452301UL (ParsePosition.create 8 0)
+
+    [<Fact>]
+    let ``readAt parses at an absolute offset without moving the current cursor`` () =
+        let parser = Contiguous.readAt 3 Contiguous.u16be
+
+        invoke parser [| 0x00uy; 0x01uy; 0x02uy; 0x12uy; 0x34uy; 0xFFuy |] (ParsePosition.create 1 3)
+        |> expectSuccess 0x1234us (ParsePosition.create 1 3)
 
     [<Fact>]
     let ``varUInt64 reads multi-byte protobuf varints`` () =

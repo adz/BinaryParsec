@@ -194,6 +194,22 @@ module Contiguous =
 
                 succeed value (advanceBytes 4 position)
 
+    let internal u32leAt (input: ReadOnlySpan<byte>) position =
+        match requireByteAligned position with
+        | Error error -> Error error
+        | Ok() ->
+            match requireBytes 4 input position with
+            | Error error -> Error error
+            | Ok() ->
+                let start = position.ByteOffset
+                let value =
+                    uint32 input[start]
+                    ||| (uint32 input[start + 1] <<< 8)
+                    ||| (uint32 input[start + 2] <<< 16)
+                    ||| (uint32 input[start + 3] <<< 24)
+
+                succeed value (advanceBytes 4 position)
+
     let internal u16leAt (input: ReadOnlySpan<byte>) position =
         match requireByteAligned position with
         | Error error -> Error error
@@ -207,6 +223,46 @@ module Contiguous =
                     ||| (uint16 input[start + 1] <<< 8)
 
                 succeed value (advanceBytes 2 position)
+
+    let internal u64beAt (input: ReadOnlySpan<byte>) position =
+        match requireByteAligned position with
+        | Error error -> Error error
+        | Ok() ->
+            match requireBytes 8 input position with
+            | Error error -> Error error
+            | Ok() ->
+                let start = position.ByteOffset
+                let value =
+                    (uint64 input[start] <<< 56)
+                    ||| (uint64 input[start + 1] <<< 48)
+                    ||| (uint64 input[start + 2] <<< 40)
+                    ||| (uint64 input[start + 3] <<< 32)
+                    ||| (uint64 input[start + 4] <<< 24)
+                    ||| (uint64 input[start + 5] <<< 16)
+                    ||| (uint64 input[start + 6] <<< 8)
+                    ||| uint64 input[start + 7]
+
+                succeed value (advanceBytes 8 position)
+
+    let internal u64leAt (input: ReadOnlySpan<byte>) position =
+        match requireByteAligned position with
+        | Error error -> Error error
+        | Ok() ->
+            match requireBytes 8 input position with
+            | Error error -> Error error
+            | Ok() ->
+                let start = position.ByteOffset
+                let value =
+                    uint64 input[start]
+                    ||| (uint64 input[start + 1] <<< 8)
+                    ||| (uint64 input[start + 2] <<< 16)
+                    ||| (uint64 input[start + 3] <<< 24)
+                    ||| (uint64 input[start + 4] <<< 32)
+                    ||| (uint64 input[start + 5] <<< 40)
+                    ||| (uint64 input[start + 6] <<< 48)
+                    ||| (uint64 input[start + 7] <<< 56)
+
+                succeed value (advanceBytes 8 position)
 
     let internal varUInt64At (input: ReadOnlySpan<byte>) position =
         match requireByteAligned position with
@@ -301,6 +357,18 @@ module Contiguous =
             | Ok(struct (value, nextPosition)) ->
                 let nextParser = binder value
                 nextParser.Invoke(input, nextPosition)
+            | Error error -> Error error)
+
+    /// Runs a parser at an absolute byte offset without changing the current cursor.
+    let readAt byteOffset (parser: ContiguousParser<'T>) =
+        if byteOffset < 0 then
+            invalidArg (nameof byteOffset) "Read offset must be non-negative."
+
+        ContiguousParser<'T>(fun input position ->
+            let targetPosition = ParsePosition.create byteOffset 0
+
+            match parser.Invoke(input, targetPosition) with
+            | Ok(struct (value, _)) -> succeed value position
             | Error error -> Error error)
 
     /// Sequences two parsers and returns both parsed values.
@@ -424,6 +492,18 @@ module Contiguous =
     /// Reads an unsigned 32-bit integer in big-endian byte order.
     let u32be =
         ContiguousParser<uint32>(fun input position -> u32beAt input position)
+
+    /// Reads an unsigned 32-bit integer in little-endian byte order.
+    let u32le =
+        ContiguousParser<uint32>(fun input position -> u32leAt input position)
+
+    /// Reads an unsigned 64-bit integer in big-endian byte order.
+    let u64be =
+        ContiguousParser<uint64>(fun input position -> u64beAt input position)
+
+    /// Reads an unsigned 64-bit integer in little-endian byte order.
+    let u64le =
+        ContiguousParser<uint64>(fun input position -> u64leAt input position)
 
     /// Reads an unsigned 64-bit varint using the Protocol Buffers wire encoding.
     let varUInt64 =

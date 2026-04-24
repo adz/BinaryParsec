@@ -26,7 +26,7 @@ Rules:
    Add only the varint, tag, and bounded payload helpers needed for one realistic field reader and unknown-field skipping.
 7. [x] Cover arbitrary-width bit extraction with a tiny DEFLATE block-prelude snippet.
    Use it to validate bit ordering, non-byte-aligned reads, and compact flag parsing.
-8. [ ] Cover width/endian completeness and offset-based reads with a tiny ELF snippet.
+8. [x] Cover width/endian completeness and offset-based reads with a tiny ELF snippet.
    Add the missing fixed-width integer readers and the minimum offset/jump helpers needed for header-plus-table parsing.
 9. [ ] Cover transport-plus-payload layering with a tiny Modbus TCP MBAP snippet.
    Use it to prove shared payload parsing over a distinct transport frame without widening the public API prematurely.

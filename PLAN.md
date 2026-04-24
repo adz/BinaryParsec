@@ -62,7 +62,8 @@ The active sequence is:
 - a tiny CAN classic controller-style header snippet now covers base-identifier extraction, packed control flags, and CAN classic DLC validation
 - a tiny Protocol Buffers wire-field snippet now covers varints, field tags, length-delimited payloads, and unknown-field skipping
 - a tiny DEFLATE block-prelude snippet now covers least-significant-bit-first packed fields, arbitrary-width extraction, and non-byte-aligned reads
-- the next task is to cover width/endian completeness and offset-based reads with a tiny ELF snippet
+- a tiny ELF header-plus-program-header snippet now covers 32-bit and 64-bit width reads, little-endian and big-endian selection, and absolute offset-based table lookups
+- the next task is to cover transport-plus-payload layering with a tiny Modbus TCP MBAP snippet
 
 ## Snippet Ladder
 
