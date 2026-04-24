@@ -60,7 +60,8 @@ The active sequence is:
 - the protocol-layer C# direction is confirmed as thin `BinaryParsec.Protocols.*` facades over the F#-first core
 - test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
 - a tiny CAN classic controller-style header snippet now covers base-identifier extraction, packed control flags, and CAN classic DLC validation
-- the next task is to cover varints and length-delimited payloads with a tiny Protocol Buffers wire-field snippet
+- a tiny Protocol Buffers wire-field snippet now covers varints, field tags, length-delimited payloads, and unknown-field skipping
+- the next task is to cover arbitrary-width bit extraction with a tiny DEFLATE block-prelude snippet
 
 ## Snippet Ladder
 

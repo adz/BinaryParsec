@@ -82,6 +82,23 @@ module PrimitiveOperationsTests =
         |> expectSuccess 0x12345678u (ParsePosition.create 4 0)
 
     [<Fact>]
+    let ``varUInt64 reads multi-byte protobuf varints`` () =
+        invoke Contiguous.varUInt64 [| 0xACuy; 0x02uy; 0xFFuy |] ParsePosition.origin
+        |> expectSuccess 300UL (ParsePosition.create 2 0)
+
+    [<Fact>]
+    let ``takeVarintPrefixed returns the bounded payload slice`` () =
+        let input = [| 0x03uy; 0x10uy; 0x20uy; 0x30uy; 0x40uy |]
+
+        match invoke Contiguous.takeVarintPrefixed input ParsePosition.origin with
+        | Ok(struct (slice, position)) ->
+            test <@ slice = ByteSlice.create 1 3 @>
+            test <@ position = ParsePosition.create 4 0 @>
+            Assert.Equal<byte>([| 0x10uy; 0x20uy; 0x30uy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(input)) slice).ToArray())
+        | Error error ->
+            raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
+
+    [<Fact>]
     let ``bit reads advance across byte boundary`` () =
         let input = [| 0b1010_0001uy; 0b0100_0000uy |]
 
@@ -120,6 +137,14 @@ module PrimitiveOperationsTests =
 
         invoke (Contiguous.bits 9) [| 0x80uy |] ParsePosition.origin
         |> expectFailure ParsePosition.origin "Unexpected end of input while reading 9 bit(s)."
+
+        invoke Contiguous.varUInt64 [| 0x80uy |] ParsePosition.origin
+        |> expectFailure (ParsePosition.create 1 0) "Unexpected end of input while reading 1 byte(s)."
+
+    [<Fact>]
+    let ``varUInt64 rejects values wider than 64 bits`` () =
+        invoke Contiguous.varUInt64 [| 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0x02uy |] ParsePosition.origin
+        |> expectFailure (ParsePosition.create 9 0) "Varint exceeds 64 bits."
 
     [<Fact>]
     let ``byte aligned primitives reject bit offsets`` () =

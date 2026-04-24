@@ -22,7 +22,7 @@ Rules:
    Drive reusable signature matching, chunk iteration, and length-bounded looping from PNG before returning to a fuller PNG package.
 5. [x] Cover packed flags and multi-bit extraction with a tiny CAN classic frame snippet.
    Add only the bitfield helpers needed to parse identifier bits, control flags, and DLC correctly.
-6. [ ] Cover varints and length-delimited payloads with a tiny Protocol Buffers wire-format snippet.
+6. [x] Cover varints and length-delimited payloads with a tiny Protocol Buffers wire-format snippet.
    Add only the varint, tag, and bounded payload helpers needed for one realistic field reader and unknown-field skipping.
 7. [ ] Cover arbitrary-width bit extraction with a tiny DEFLATE block-prelude snippet.
    Use it to validate bit ordering, non-byte-aligned reads, and compact flag parsing.

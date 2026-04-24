@@ -208,6 +208,48 @@ module Contiguous =
 
                 succeed value (advanceBytes 2 position)
 
+    let internal varUInt64At (input: ReadOnlySpan<byte>) position =
+        match requireByteAligned position with
+        | Error error -> Error error
+        | Ok() ->
+            let mutable nextPosition = position
+            let mutable shift = 0
+            let mutable count = 0
+            let mutable value = 0UL
+            let mutable result = Unchecked.defaultof<ParseResult<struct (uint64 * ParsePosition)>>
+            let mutable finished = false
+
+            while not finished do
+                match requireBytes 1 input nextPosition with
+                | Error error ->
+                    result <- Error error
+                    finished <- true
+                | Ok() ->
+                    let current = input[nextPosition.ByteOffset]
+                    let payload = uint64 (current &&& 0x7Fuy)
+                    let hasContinuation = (current &&& 0x80uy) <> 0uy
+
+                    if count = 9 && (hasContinuation || payload > 1UL) then
+                        result <-
+                            Error
+                                {
+                                    Position = nextPosition
+                                    Message = "Varint exceeds 64 bits."
+                                }
+                        finished <- true
+                    else
+                        value <- value ||| (payload <<< shift)
+                        nextPosition <- advanceBytes 1 nextPosition
+                        count <- count + 1
+
+                        if not hasContinuation then
+                            result <- succeed value nextPosition
+                            finished <- true
+                        else
+                            shift <- shift + 7
+
+            result
+
     /// Runs a parser from the origin and returns only the parsed value.
     let run (parser: ContiguousParser<'T>) (input: ReadOnlySpan<byte>) : ParseResult<'T> =
         match parser.Invoke(input, ParsePosition.origin) with
@@ -383,6 +425,10 @@ module Contiguous =
     let u32be =
         ContiguousParser<uint32>(fun input position -> u32beAt input position)
 
+    /// Reads an unsigned 64-bit varint using the Protocol Buffers wire encoding.
+    let varUInt64 =
+        ContiguousParser<uint64>(fun input position -> varUInt64At input position)
+
     /// Reads one bit in most-significant-bit-first order.
     let bit =
         ContiguousParser<bool>(fun input position ->
@@ -420,3 +466,14 @@ module Contiguous =
                     remaining <- remaining - takeCount
 
                 succeed value nextPosition)
+
+    /// Reads a varint length prefix and returns that many bytes as a zero-copy slice.
+    let takeVarintPrefixed =
+        ContiguousParser<ByteSlice>(fun input position ->
+            match varUInt64At input position with
+            | Error error -> Error error
+            | Ok(struct (length, afterLength)) ->
+                if length > uint64 Int32.MaxValue then
+                    failAt position "Length-delimited payload exceeds supported contiguous input size."
+                else
+                    takeAt (int length) input afterLength)
