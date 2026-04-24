@@ -164,6 +164,20 @@ module Contiguous =
 
                 succeed value (advanceBytes 4 position)
 
+    let internal u16leAt (input: ReadOnlySpan<byte>) position =
+        match requireByteAligned position with
+        | Error error -> Error error
+        | Ok() ->
+            match requireBytes 2 input position with
+            | Error error -> Error error
+            | Ok() ->
+                let start = position.ByteOffset
+                let value =
+                    uint16 input[start]
+                    ||| (uint16 input[start + 1] <<< 8)
+
+                succeed value (advanceBytes 2 position)
+
     /// Runs a parser from the origin and returns only the parsed value.
     let run (parser: ContiguousParser<'T>) (input: ReadOnlySpan<byte>) : ParseResult<'T> =
         match parser.Invoke(input, ParsePosition.origin) with
@@ -177,6 +191,15 @@ module Contiguous =
     /// Lifts a value into a parser that consumes no input.
     let result value =
         ContiguousParser<'T>(fun _ position -> succeed value position)
+
+    /// Returns the current parse position without consuming input.
+    let position =
+        ContiguousParser<ParsePosition>(fun _ current -> succeed current current)
+
+    /// Returns the remaining byte count from the current position.
+    let remainingBytes =
+        ContiguousParser<int>(fun input current ->
+            succeed (input.Length - current.ByteOffset) current)
 
     /// Transforms a parser result without changing how much input is consumed.
     let map mapping (source: ContiguousParser<'T>) =
@@ -251,6 +274,23 @@ module Contiguous =
 
         ContiguousParser<ByteSlice>(fun input position -> takeAt count input position)
 
+    /// Returns a zero-copy slice that leaves `trailingCount` bytes unread.
+    let takeRemainingMinus trailingCount =
+        if trailingCount < 0 then
+            invalidArg (nameof trailingCount) "Trailing count must be non-negative."
+
+        ContiguousParser<ByteSlice>(fun input position ->
+            match requireByteAligned position with
+            | Error error -> Error error
+            | Ok() ->
+                let count = input.Length - position.ByteOffset - trailingCount
+
+                if count < 0 then
+                    readFailure position trailingCount
+                else
+                    let slice = ByteSlice.create position.ByteOffset count
+                    succeed slice (advanceBytes count position))
+
     /// Reads an unsigned 16-bit integer in big-endian byte order.
     let u16be =
         ContiguousParser<uint16>(fun input position ->
@@ -269,19 +309,7 @@ module Contiguous =
 
     /// Reads an unsigned 16-bit integer in little-endian byte order.
     let u16le =
-        ContiguousParser<uint16>(fun input position ->
-            match requireByteAligned position with
-            | Error error -> Error error
-            | Ok() ->
-                match requireBytes 2 input position with
-                | Error error -> Error error
-                | Ok() ->
-                    let start = position.ByteOffset
-                    let value =
-                        uint16 input[start]
-                        ||| (uint16 input[start + 1] <<< 8)
-
-                    succeed value (advanceBytes 2 position))
+        ContiguousParser<uint16>(fun input position -> u16leAt input position)
 
     /// Reads an unsigned 32-bit integer in big-endian byte order.
     let u32be =

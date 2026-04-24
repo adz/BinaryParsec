@@ -44,25 +44,23 @@ module internal ModbusRtuParser =
                     Contiguous.failAt position incompleteFrameMessage
                 else
                     let payloadLength = remaining - minimumFrameLength
-                    let crcOffset = position.ByteOffset + 2 + payloadLength
-
                     let frameBytes = ByteSlice.create position.ByteOffset (remaining - 2)
                     let payload = ByteSlice.create (position.ByteOffset + 2) payloadLength
-                    let expected =
-                        uint16 input[crcOffset]
-                        ||| (uint16 input[crcOffset + 1] <<< 8)
 
-                    let actual = computeCrc input frameBytes
+                    match Contiguous.u16leAt input (ParsePosition.create (position.ByteOffset + 2 + payloadLength) 0) with
+                    | Error error -> Error error
+                    | Ok(struct (expected, nextPosition)) ->
+                        let actual = computeCrc input frameBytes
 
-                    Ok(
-                        struct (
-                            { Address = input[position.ByteOffset]
-                              FunctionCode = input[position.ByteOffset + 1]
-                              Payload = payload
-                              Crc =
-                                { Expected = expected
-                                  Actual = actual
-                                  IsMatch = expected = actual } },
-                            ParsePosition.create input.Length 0
-                        )
-                    ))
+                        Ok(
+                            struct (
+                                { Address = input[position.ByteOffset]
+                                  FunctionCode = input[position.ByteOffset + 1]
+                                  Payload = payload
+                                  Crc =
+                                    { Expected = expected
+                                      Actual = actual
+                                      IsMatch = expected = actual } },
+                                nextPosition
+                            )
+                        ))
