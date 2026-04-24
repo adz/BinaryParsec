@@ -59,7 +59,8 @@ The active sequence is:
 - the PNG initial slice and Modbus RTU fixed header now use the cleaner fixed-shape composition path without regressing hot-path allocation behavior
 - the protocol-layer C# direction is confirmed as thin `BinaryParsec.Protocols.*` facades over the F#-first core
 - test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
-- the next task is to cover packed flags and multi-bit extraction with a tiny CAN classic frame snippet
+- a tiny CAN classic controller-style header snippet now covers base-identifier extraction, packed control flags, and CAN classic DLC validation
+- the next task is to cover varints and length-delimited payloads with a tiny Protocol Buffers wire-field snippet
 
 ## Snippet Ladder
 

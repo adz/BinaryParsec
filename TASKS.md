@@ -20,7 +20,7 @@ Rules:
    Update `Png.initialSlice` and the fixed-shape part of `ModbusRtuParser.frame` once the core composition path is allocation-safe.
 4. [x] Cover repeated bounded reads with a tiny PNG chunk-iterator snippet.
    Drive reusable signature matching, chunk iteration, and length-bounded looping from PNG before returning to a fuller PNG package.
-5. [ ] Cover packed flags and multi-bit extraction with a tiny CAN classic frame snippet.
+5. [x] Cover packed flags and multi-bit extraction with a tiny CAN classic frame snippet.
    Add only the bitfield helpers needed to parse identifier bits, control flags, and DLC correctly.
 6. [ ] Cover varints and length-delimited payloads with a tiny Protocol Buffers wire-format snippet.
    Add only the varint, tag, and bounded payload helpers needed for one realistic field reader and unknown-field skipping.

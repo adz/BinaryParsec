@@ -121,6 +121,13 @@ module Contiguous =
                 Message = $"Unexpected end of input while reading {bytesRequested} byte(s)."
             }
 
+    let private readBitFailure position bitsRequested =
+        Error
+            {
+                Position = position
+                Message = $"Unexpected end of input while reading {bitsRequested} bit(s)."
+            }
+
     let private requireByteAligned position =
         if position.BitOffset = 0 then
             Ok()
@@ -138,6 +145,14 @@ module Contiguous =
             Ok()
         else
             readFailure position bytesRequested
+
+    let private requireBits bitsRequested (input: ReadOnlySpan<byte>) position =
+        let remainingBits = ((input.Length - position.ByteOffset) * 8) - position.BitOffset
+
+        if remainingBits >= bitsRequested then
+            Ok()
+        else
+            readBitFailure position bitsRequested
 
     let private advanceBytes count position =
         { ByteOffset = position.ByteOffset + count
@@ -378,3 +393,30 @@ module Contiguous =
                 let shift = 7 - position.BitOffset
                 let value = ((current >>> shift) &&& 1uy) = 1uy
                 succeed value (advanceBits 1 position))
+
+    /// Reads `count` bits in most-significant-bit-first order into an unsigned integer.
+    let bits count =
+        if count < 1 || count > 32 then
+            invalidArg (nameof count) "Bit count must be between 1 and 32."
+
+        ContiguousParser<uint32>(fun input position ->
+            match requireBits count input position with
+            | Error error -> Error error
+            | Ok() ->
+                let mutable remaining = count
+                let mutable nextPosition = position
+                let mutable value = 0u
+
+                while remaining > 0 do
+                    let current = input[nextPosition.ByteOffset]
+                    let availableInByte = 8 - nextPosition.BitOffset
+                    let takeCount = min remaining availableInByte
+                    let shift = availableInByte - takeCount
+                    let mask = (1 <<< takeCount) - 1
+                    let chunk = uint32 ((int current >>> shift) &&& mask)
+
+                    value <- (value <<< takeCount) ||| chunk
+                    nextPosition <- advanceBits takeCount nextPosition
+                    remaining <- remaining - takeCount
+
+                succeed value nextPosition)

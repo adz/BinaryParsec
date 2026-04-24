@@ -116,6 +116,11 @@ Why it matters:
 
 It puts pressure on the bit-level and compact-frame parts of the design before more specialized variants such as CAN FD are added.
 
+The current tiny slice uses a controller-style classic header snippet where the
+11-bit base identifier spans `SIDH` plus the top three bits of `SIDL`, the
+packed `EXIDE` flag distinguishes base versus extended frames, and the DLC byte
+packs `RTR` plus the CAN classic payload length code.
+
 ## Initial Ordered Implementation
 
 Use tiny real snippets first, then come back to full packages:

@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="CanClassicSnippet.fs" />
     <Compile Include="PrimitiveOperationsTests.fs" />
+    <Compile Include="CanClassicSnippetTests.fs" />
     <Compile Include="PngSliceTests.fs" />
     <Compile Include="ModbusRtuSliceTests.fs" />
     <Compile Include="ModbusRtuFacadeTests.fs" />
