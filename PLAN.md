@@ -55,9 +55,10 @@ The active sequence is:
 - builds stage assemblies and XML docs under `artifacts/api-docs/` for generated reference consumption
 - successful hot paths for the primitive, PNG, and Modbus RTU slices stay allocation-free
 - fixed-shape core composition now has an allocation-free path through direct applicative combinators and `and!` computation-expression lowering
+- the PNG initial slice and Modbus RTU fixed header now use the cleaner fixed-shape composition path without regressing hot-path allocation behavior
 - the protocol-layer C# direction is confirmed as thin `BinaryParsec.Protocols.*` facades over the F#-first core
 - test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
-- the next task is to move the PNG and Modbus fixed-shape hot parsers onto the cleaner allocation-safe composition path
+- the next task is to cover repeated bounded reads with a tiny PNG chunk-iterator snippet
 
 ## Snippet Ladder
 

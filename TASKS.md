@@ -16,7 +16,7 @@ Rules:
    Core primitives, PNG slice, and Modbus RTU package-quality facade are in place.
 2. [x] Make fixed-shape parser composition allocation-free in the core.
    The core now exposes allocation-safe fixed-shape combinators and `and!` CE lowering, with zero-allocation tests covering both paths.
-3. [ ] Move PNG and Modbus fixed-shape hot parsers onto the cleaner composition path.
+3. [x] Move PNG and Modbus fixed-shape hot parsers onto the cleaner composition path.
    Update `Png.initialSlice` and the fixed-shape part of `ModbusRtuParser.frame` once the core composition path is allocation-safe.
 4. [ ] Cover repeated bounded reads with a tiny PNG chunk-iterator snippet.
    Drive reusable signature matching, chunk iteration, and length-bounded looping from PNG before returning to a fuller PNG package.

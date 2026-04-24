@@ -90,17 +90,11 @@ module Png =
 
     /// Parses the PNG signature followed by the first chunk.
     let initialSlice =
-        ContiguousParser<PngSlice>(fun input position ->
-            match signature.Invoke(input, position) with
-            | Error error -> Error error
-            | Ok(struct (parsedSignature, afterSignature)) ->
-                match chunkEnvelope.Invoke(input, afterSignature) with
-                | Error error -> Error error
-                | Ok(struct (firstChunk, nextPosition)) ->
-                    Ok(
-                        struct (
-                            { Signature = parsedSignature
-                              FirstChunk = firstChunk },
-                            nextPosition
-                        )
-                    ))
+        Contiguous.parse {
+            let! parsedSignature = signature
+            and! firstChunk = chunkEnvelope
+
+            return
+                { Signature = parsedSignature
+                  FirstChunk = firstChunk }
+        }

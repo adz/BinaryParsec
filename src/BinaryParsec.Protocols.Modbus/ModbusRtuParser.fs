@@ -17,6 +17,13 @@ module internal ModbusRtuParser =
 
     let private minimumFrameLength = 4
 
+    let private header =
+        Contiguous.parse {
+            let! address = Contiguous.``byte``
+            and! functionCode = Contiguous.``byte``
+            return struct (address, functionCode)
+        }
+
     let private computeCrc (input: ReadOnlySpan<byte>) (slice: ByteSlice) =
         let mutable crc = 0xFFFFus
         let bytes = ByteSlice.asSpan input slice
@@ -44,23 +51,27 @@ module internal ModbusRtuParser =
                     Contiguous.failAt position incompleteFrameMessage
                 else
                     let payloadLength = remaining - minimumFrameLength
-                    let frameBytes = ByteSlice.create position.ByteOffset (remaining - 2)
-                    let payload = ByteSlice.create (position.ByteOffset + 2) payloadLength
 
-                    match Contiguous.u16leAt input (ParsePosition.create (position.ByteOffset + 2 + payloadLength) 0) with
+                    match header.Invoke(input, position) with
                     | Error error -> Error error
-                    | Ok(struct (expected, nextPosition)) ->
-                        let actual = computeCrc input frameBytes
+                    | Ok(struct (struct (address, functionCode), afterHeader)) ->
+                        let frameBytes = ByteSlice.create position.ByteOffset (remaining - 2)
+                        let payload = ByteSlice.create afterHeader.ByteOffset payloadLength
 
-                        Ok(
-                            struct (
-                                { Address = input[position.ByteOffset]
-                                  FunctionCode = input[position.ByteOffset + 1]
-                                  Payload = payload
-                                  Crc =
-                                    { Expected = expected
-                                      Actual = actual
-                                      IsMatch = expected = actual } },
-                                nextPosition
-                            )
-                        ))
+                        match Contiguous.u16leAt input (ParsePosition.create (afterHeader.ByteOffset + payloadLength) 0) with
+                        | Error error -> Error error
+                        | Ok(struct (expected, nextPosition)) ->
+                            let actual = computeCrc input frameBytes
+
+                            Ok(
+                                struct (
+                                    { Address = address
+                                      FunctionCode = functionCode
+                                      Payload = payload
+                                      Crc =
+                                        { Expected = expected
+                                          Actual = actual
+                                          IsMatch = expected = actual } },
+                                    nextPosition
+                                )
+                            ))
