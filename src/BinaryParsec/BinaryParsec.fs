@@ -303,6 +303,30 @@ module Contiguous =
 
         ContiguousParser<ByteSlice>(fun input position -> takeAt count input position)
 
+    /// Matches an exact byte sequence and returns its zero-copy input slice.
+    let expectBytes (expected: byte array) mismatchMessage =
+        if isNull expected then
+            nullArg (nameof expected)
+
+        ContiguousParser<ByteSlice>(fun input position ->
+            match takeAt expected.Length input position with
+            | Error error -> Error error
+            | Ok(struct (slice, nextPosition)) ->
+                let actual = ByteSlice.asSpan input slice
+                let mutable matches = true
+                let mutable index = 0
+
+                while matches && index < expected.Length do
+                    if actual[index] <> expected[index] then
+                        matches <- false
+
+                    index <- index + 1
+
+                if matches then
+                    succeed slice nextPosition
+                else
+                    failAt position mismatchMessage)
+
     /// Returns a zero-copy slice that leaves `trailingCount` bytes unread.
     let takeRemainingMinus trailingCount =
         if trailingCount < 0 then

@@ -49,6 +49,7 @@ The active sequence is:
 - the core is now a contiguous `ReadOnlySpan<byte>` runner over explicit `ParsePosition`, with byte, endian, slice, and bit primitives
 - the composition layer is in place with `map`, `bind`, sequencing helpers, and a computation-expression entry point
 - the PNG and Modbus RTU slices now live in separate `BinaryParsec.Protocols.*` projects and are validated with offset-aware diagnostics
+- the PNG slice now covers signature matching, one-chunk reads, and chunk iteration through `IEND` with zero-copy chunk envelopes
 - `BinaryParsec.Protocols.Modbus` now exposes package-quality RTU parse entry points, stable owned frame models, and C#-friendly overloads
 - the public surface now carries the needed purpose-and-fit comments and concise API docs
 - Modbus package docs now cover RTU usage, package reference material, and the stable-facade versus low-level-parser split
@@ -58,7 +59,7 @@ The active sequence is:
 - the PNG initial slice and Modbus RTU fixed header now use the cleaner fixed-shape composition path without regressing hot-path allocation behavior
 - the protocol-layer C# direction is confirmed as thin `BinaryParsec.Protocols.*` facades over the F#-first core
 - test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
-- the next task is to cover repeated bounded reads with a tiny PNG chunk-iterator snippet
+- the next task is to cover packed flags and multi-bit extraction with a tiny CAN classic frame snippet
 
 ## Snippet Ladder
 

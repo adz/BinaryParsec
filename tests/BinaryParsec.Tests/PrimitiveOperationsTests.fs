@@ -54,6 +54,23 @@ module PrimitiveOperationsTests =
             raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
 
     [<Fact>]
+    let ``expectBytes matches exact sequence and returns its slice`` () =
+        let input = [| 0xAAuy; 0x89uy; 0x50uy; 0x4Euy; 0x47uy |]
+
+        match invoke (Contiguous.expectBytes [| 0x89uy; 0x50uy; 0x4Euy; 0x47uy |] "bad magic") input (ParsePosition.create 1 0) with
+        | Ok(struct (slice, position)) ->
+            test <@ slice = ByteSlice.create 1 4 @>
+            test <@ position = ParsePosition.create 5 0 @>
+            Assert.Equal<byte>([| 0x89uy; 0x50uy; 0x4Euy; 0x47uy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(input)) slice).ToArray())
+        | Error error ->
+            raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
+
+    [<Fact>]
+    let ``expectBytes reports mismatch at the starting offset`` () =
+        invoke (Contiguous.expectBytes [| 0x89uy; 0x50uy |] "bad magic") [| 0x89uy; 0x51uy |] ParsePosition.origin
+        |> expectFailure ParsePosition.origin "bad magic"
+
+    [<Fact>]
     let ``u16 and u32 reads respect endianness`` () =
         invoke Contiguous.u16be [| 0x12uy; 0x34uy |] ParsePosition.origin
         |> expectSuccess 0x1234us (ParsePosition.create 2 0)

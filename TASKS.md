@@ -18,7 +18,7 @@ Rules:
    The core now exposes allocation-safe fixed-shape combinators and `and!` CE lowering, with zero-allocation tests covering both paths.
 3. [x] Move PNG and Modbus fixed-shape hot parsers onto the cleaner composition path.
    Update `Png.initialSlice` and the fixed-shape part of `ModbusRtuParser.frame` once the core composition path is allocation-safe.
-4. [ ] Cover repeated bounded reads with a tiny PNG chunk-iterator snippet.
+4. [x] Cover repeated bounded reads with a tiny PNG chunk-iterator snippet.
    Drive reusable signature matching, chunk iteration, and length-bounded looping from PNG before returning to a fuller PNG package.
 5. [ ] Cover packed flags and multi-bit extraction with a tiny CAN classic frame snippet.
    Add only the bitfield helpers needed to parse identifier bits, control flags, and DLC correctly.
