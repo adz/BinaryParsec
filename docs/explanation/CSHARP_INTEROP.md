@@ -60,6 +60,7 @@ When zero-copy internals need a more stable outer representation, prefer thin wr
 For a protocol package such as `BinaryParsec.Protocols.Modbus`, the intended shape is:
 
 ```csharp
+var result = ModbusRtu.TryParseFrame(buffer);
 var ok = ModbusRtu.TryParseFrame(buffer, out var frame, out var error);
 var frame = ModbusRtu.ParseFrame(buffer);
 ```

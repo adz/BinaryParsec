@@ -44,6 +44,9 @@ Agents must follow these design rules:
 - Pull repeated logic out when the reuse is real and the abstraction stays clear.
 - Do not introduce boilerplate-heavy code structures.
 - Do not add infrastructure that exists only for hypothetical future needs.
+- Prefer one public module, type, or class per file.
+- Only keep multiple public types in one file when they form a very small, tightly related family and splitting them would be clearly worse for readability.
+- When compactness and navigability conflict, prefer navigability.
 
 ## Anti-Patterns
 

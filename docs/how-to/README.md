@@ -1,3 +1,5 @@
 # How-to Guides
 
-Task-focused guides will live here once the core parser workflow is stable enough to document concretely.
+Task-focused guides for package consumers live here.
+
+- [Parse a Modbus RTU Frame](parse-modbus-rtu-frame.md)

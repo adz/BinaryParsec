@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="BinaryParsec.Protocols.Modbus.fs" />
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="ModbusRtuCrcResult.fs" />
+    <Compile Include="ModbusRtuFrame.fs" />
+    <Compile Include="ModbusRtuFrameSlice.fs" />
+    <Compile Include="ModbusRtuParser.fs" />
+    <Compile Include="ModbusRtu.fs" />
   </ItemGroup>
 
   <ItemGroup>

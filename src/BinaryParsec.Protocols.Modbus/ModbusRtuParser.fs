@@ -1,35 +1,21 @@
 namespace BinaryParsec.Protocols.Modbus
 
 open System
-open System.Runtime.CompilerServices
 open BinaryParsec
 
-/// Reports the transmitted and computed CRC values for a Modbus RTU frame.
-[<Struct; IsReadOnlyAttribute>]
-type ModbusRtuCrcResult =
-    {
-        Expected: uint16
-        Actual: uint16
-        IsMatch: bool
-    }
-
-/// Represents one contiguous Modbus RTU frame over the shared binary core.
-[<Struct; IsReadOnlyAttribute>]
-type ModbusRtuFrame =
-    {
-        Address: byte
-        FunctionCode: byte
-        Payload: ByteSlice
-        Crc: ModbusRtuCrcResult
-    }
-
-/// The first Modbus RTU parser slice built on the shared contiguous core.
+/// Low-level Modbus RTU parsing over the shared contiguous-input core.
 [<RequireQualifiedAccess>]
-module ModbusRtu =
-    let private minimumFrameLength = 4
-
-    let private incompleteFrameMessage =
+module internal ModbusRtuParser =
+    let internal incompleteFrameMessage =
         "Modbus RTU frame must contain address, function code, and CRC."
+
+    let internal malformedExceptionPayloadMessage =
+        "Modbus RTU exception response payload must contain exactly one exception code byte."
+
+    let internal crcMismatchMessage expected actual =
+        $"Modbus RTU CRC mismatch. Expected 0x{expected:X4}, computed 0x{actual:X4}."
+
+    let private minimumFrameLength = 4
 
     let private computeCrc (input: ReadOnlySpan<byte>) (slice: ByteSlice) =
         let mutable crc = 0xFFFFus
@@ -48,7 +34,7 @@ module ModbusRtu =
 
     /// Parses one contiguous Modbus RTU frame and reports the transmitted versus computed CRC.
     let frame =
-        ContiguousParser<ModbusRtuFrame>(fun input position ->
+        ContiguousParser<ModbusRtuFrameSlice>(fun input position ->
             if position.BitOffset <> 0 then
                 Contiguous.failAt position "Byte-aligned primitive cannot run when the cursor is at a bit offset."
             else

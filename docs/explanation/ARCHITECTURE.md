@@ -94,6 +94,7 @@ The current preferred sequence is:
 
 1. PNG
 2. Modbus RTU
-3. CAN
-4. Protocol Buffers wire parsing
-5. Modbus TCP
+3. productionize the Modbus RTU package surface
+4. CAN
+5. Protocol Buffers wire parsing
+6. Modbus TCP

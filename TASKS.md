@@ -55,3 +55,9 @@ Rules:
 19. [x] Use normal `dotnet test` execution for tests along with Unquote.
 20. [x] Split the PNG and Modbus slices into separate `BinaryParsec.Protocols.*` projects.
    Keep the core project focused on generic parser primitives and wire tests through the new project references.
+21. [x] Productize `BinaryParsec.Protocols.Modbus` for RTU frame parsing.
+   Add stable public models and package-facing parse entry points for real F# and C# consumers.
+22. [x] Add spec-backed Modbus RTU coverage for facade behavior.
+   Cover valid requests, valid responses, exception responses, CRC rejection, and truncation through the public API.
+23. [x] Add Modbus package docs.
+   Document RTU parsing usage, the public surface, and the package boundary between the stable facade and low-level parser path.

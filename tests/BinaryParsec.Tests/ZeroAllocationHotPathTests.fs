@@ -50,7 +50,7 @@ let ``png initial slice stays allocation free`` () =
 [<Fact>]
 let ``modbus frame parse stays allocation free`` () =
     assertZeroAllocations
-        ModbusRtu.frame
+        ModbusRtuParser.frame
         [|
             0x01uy; 0x03uy; 0x00uy; 0x00uy; 0x00uy; 0x0Auy; 0xC5uy; 0xCDuy
         |]

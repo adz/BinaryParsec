@@ -12,6 +12,7 @@
     <Compile Include="PrimitiveOperationsTests.fs" />
     <Compile Include="PngSliceTests.fs" />
     <Compile Include="ModbusRtuSliceTests.fs" />
+    <Compile Include="ModbusRtuFacadeTests.fs" />
     <Compile Include="ZeroAllocationHotPathTests.fs" />
     <Compile Include="TestHost.fs" />
   </ItemGroup>
