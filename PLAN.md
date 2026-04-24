@@ -64,7 +64,8 @@ The active sequence is:
 - a tiny DEFLATE block-prelude snippet now covers least-significant-bit-first packed fields, arbitrary-width extraction, and non-byte-aligned reads
 - a tiny ELF header-plus-program-header snippet now covers 32-bit and 64-bit width reads, little-endian and big-endian selection, and absolute offset-based table lookups
 - a tiny Modbus TCP MBAP snippet now covers MBAP transport validation and shared Modbus PDU parsing over a distinct transport frame
-- the next task is to cover stateful byte-stream parsing with a tiny MIDI event snippet
+- a tiny MIDI channel-event stream snippet now covers delta-time VLQs, running status reuse, and state threaded across byte-stream events
+- the next task is to flesh out docs in parallel with the snippet milestones
 
 ## Snippet Ladder
 

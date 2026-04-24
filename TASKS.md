@@ -30,7 +30,7 @@ Rules:
    Add the missing fixed-width integer readers and the minimum offset/jump helpers needed for header-plus-table parsing.
 9. [x] Cover transport-plus-payload layering with a tiny Modbus TCP MBAP snippet.
    Use it to prove shared payload parsing over a distinct transport frame without widening the public API prematurely.
-10. [ ] Cover stateful byte-stream parsing with a tiny MIDI event snippet.
+10. [x] Cover stateful byte-stream parsing with a tiny MIDI event snippet.
    Use it to pressure parser state and to inform the later incremental-input backend design.
 11. [ ] Flesh out docs in parallel with each snippet milestone.
    Add one explanation page, one how-to, and the relevant reference updates whenever a new capability family lands.
