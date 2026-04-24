@@ -34,6 +34,27 @@ let ``zero copy slice read stays allocation free`` () =
     assertZeroAllocations (Contiguous.take 3) [| 0x10uy; 0x20uy; 0x30uy; 0x40uy |]
 
 [<Fact>]
+let ``fixed-shape map2 composition stays allocation free`` () =
+    let parser =
+        Contiguous.map2
+            (fun marker payload -> int marker + int payload)
+            Contiguous.``byte``
+            Contiguous.u16be
+
+    assertZeroAllocations parser [| 0x01uy; 0x12uy; 0x34uy |]
+
+[<Fact>]
+let ``fixed-shape and! composition stays allocation free`` () =
+    let parser =
+        Contiguous.parse {
+            let! marker = Contiguous.``byte``
+            and! payload = Contiguous.u16be
+            return int marker + int payload
+        }
+
+    assertZeroAllocations parser [| 0x01uy; 0x12uy; 0x34uy |]
+
+[<Fact>]
 let ``png initial slice stays allocation free`` () =
     assertZeroAllocations
         Png.initialSlice

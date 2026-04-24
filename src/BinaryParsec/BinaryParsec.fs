@@ -57,6 +57,21 @@ type ContiguousParserBuilder() =
     member _.ReturnFrom(parser: ContiguousParser<'T>) : ContiguousParser<'T> =
         parser
 
+    member _.BindReturn(parser: ContiguousParser<'T>, mapping: 'T -> 'U) : ContiguousParser<'U> =
+        ContiguousParser<'U>(fun input position ->
+            match parser.Invoke(input, position) with
+            | Ok(struct (value, nextPosition)) -> Ok(struct (mapping value, nextPosition))
+            | Error error -> Error error)
+
+    member _.MergeSources(left: ContiguousParser<'T>, right: ContiguousParser<'U>) : ContiguousParser<struct ('T * 'U)> =
+        ContiguousParser<struct ('T * 'U)>(fun input position ->
+            match left.Invoke(input, position) with
+            | Ok(struct (leftValue, afterLeft)) ->
+                match right.Invoke(input, afterLeft) with
+                | Ok(struct (rightValue, afterRight)) -> Ok(struct (struct (leftValue, rightValue), afterRight))
+                | Error error -> Error error
+            | Error error -> Error error)
+
     member _.Zero() : ContiguousParser<unit> =
         ContiguousParser<unit>(fun _ position -> Ok(struct ((), position)))
 
@@ -208,6 +223,20 @@ module Contiguous =
             | Ok(struct (value, nextPosition)) -> succeed (mapping value) nextPosition
             | Error error -> Error error)
 
+    /// Sequences two fixed-shape parsers and maps their values without intermediate allocations.
+    let map2 mapping (left: ContiguousParser<'T>) (right: ContiguousParser<'U>) =
+        ContiguousParser<'V>(fun input position ->
+            match left.Invoke(input, position) with
+            | Ok(struct (leftValue, afterLeft)) ->
+                match right.Invoke(input, afterLeft) with
+                | Ok(struct (rightValue, afterRight)) -> succeed (mapping leftValue rightValue) afterRight
+                | Error error -> Error error
+            | Error error -> Error error)
+
+    /// Sequences two fixed-shape parsers and returns their values in a struct tuple.
+    let mergeSources left right =
+        map2 (fun leftValue rightValue -> struct (leftValue, rightValue)) left right
+
     /// Chooses the next parser from the previous parsed value.
     let bind (binder: 'T -> ContiguousParser<'U>) (source: ContiguousParser<'T>) =
         ContiguousParser<'U>(fun input position ->
@@ -219,15 +248,15 @@ module Contiguous =
 
     /// Sequences two parsers and returns both parsed values.
     let zip left right =
-        bind (fun leftValue -> map (fun rightValue -> leftValue, rightValue) right) left
+        map2 (fun leftValue rightValue -> leftValue, rightValue) left right
 
     /// Runs two parsers and keeps the value produced by the right parser.
     let keepRight left right =
-        bind (fun () -> right) left
+        map2 (fun () rightValue -> rightValue) left right
 
     /// Runs two parsers and keeps the value produced by the left parser.
     let keepLeft left right =
-        bind (fun leftValue -> map (fun () -> leftValue) right) left
+        map2 (fun leftValue () -> leftValue) left right
 
     /// Computation-expression builder for contiguous parsers.
     let parse = ContiguousParserBuilder()

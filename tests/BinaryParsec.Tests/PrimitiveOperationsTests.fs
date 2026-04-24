@@ -126,6 +126,13 @@ module PrimitiveOperationsTests =
         |> expectSuccess (0x12uy, 0x34uy) (ParsePosition.create 2 0)
 
     [<Fact>]
+    let ``mergeSources sequences primitive reads into a struct tuple`` () =
+        let parser = Contiguous.mergeSources Contiguous.``byte`` Contiguous.u16be
+
+        invoke parser [| 0x12uy; 0x34uy; 0x56uy; 0x78uy |] ParsePosition.origin
+        |> expectSuccess (struct (0x12uy, 0x3456us)) (ParsePosition.create 3 0)
+
+    [<Fact>]
     let ``keep helpers preserve requested side`` () =
         let keepLeftParser = Contiguous.keepLeft Contiguous.``byte`` (Contiguous.skip 1)
         let keepRightParser = Contiguous.keepRight (Contiguous.skip 1) Contiguous.``byte``
@@ -149,6 +156,18 @@ module PrimitiveOperationsTests =
 
         invoke parser [| 0xA5uy; 0x00uy; 0x12uy; 0x34uy |] ParsePosition.origin
         |> expectSuccess (0xA5uy, 0x1234us) (ParsePosition.create 4 0)
+
+    [<Fact>]
+    let ``computation expression and! sequences fixed-shape parsers`` () =
+        let parser =
+            Contiguous.parse {
+                let! marker = Contiguous.``byte``
+                and! payload = Contiguous.u16be
+                return int marker + int payload
+            }
+
+        invoke parser [| 0x01uy; 0x12uy; 0x34uy |] ParsePosition.origin
+        |> expectSuccess 0x1235 (ParsePosition.create 3 0)
 
     [<Fact>]
     let ``composition failure reports the later read offset`` () =

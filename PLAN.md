@@ -54,9 +54,10 @@ The active sequence is:
 - Modbus package docs now cover RTU usage, package reference material, and the stable-facade versus low-level-parser split
 - builds stage assemblies and XML docs under `artifacts/api-docs/` for generated reference consumption
 - successful hot paths for the primitive, PNG, and Modbus RTU slices stay allocation-free
+- fixed-shape core composition now has an allocation-free path through direct applicative combinators and `and!` computation-expression lowering
 - the protocol-layer C# direction is confirmed as thin `BinaryParsec.Protocols.*` facades over the F#-first core
 - test coverage now runs through `dotnet test` in `BinaryParsec.Tests` with Unquote-backed assertions
-- the next task is to build the snippet ladder that covers the remaining common binary reading paths before returning to full protocol completion
+- the next task is to move the PNG and Modbus fixed-shape hot parsers onto the cleaner allocation-safe composition path
 
 ## Snippet Ladder
 

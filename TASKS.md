@@ -14,8 +14,8 @@ Rules:
 
 1. [x] Establish the baseline core, first consumers, and one production-ready protocol package.
    Core primitives, PNG slice, and Modbus RTU package-quality facade are in place.
-2. [ ] Make fixed-shape parser composition allocation-free in the core.
-   Remove the current allocation penalty from CE/combinator composition so fixed parser pipelines can read linearly without regressing hot paths.
+2. [x] Make fixed-shape parser composition allocation-free in the core.
+   The core now exposes allocation-safe fixed-shape combinators and `and!` CE lowering, with zero-allocation tests covering both paths.
 3. [ ] Move PNG and Modbus fixed-shape hot parsers onto the cleaner composition path.
    Update `Png.initialSlice` and the fixed-shape part of `ModbusRtuParser.frame` once the core composition path is allocation-safe.
 4. [ ] Cover repeated bounded reads with a tiny PNG chunk-iterator snippet.
