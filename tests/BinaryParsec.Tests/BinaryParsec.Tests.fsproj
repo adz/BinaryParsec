@@ -12,13 +12,12 @@
     <Compile Include="CanClassicSnippet.fs" />
     <Compile Include="CanClassicPackageTests.fs" />
     <Compile Include="DeflatePackageTests.fs" />
-    <Compile Include="ElfSnippet.fs" />
+    <Compile Include="ElfPackageTests.fs" />
     <Compile Include="MidiEventSnippet.fs" />
     <Compile Include="ModbusTcpMbapSnippet.fs" />
     <Compile Include="ProtobufWirePackageTests.fs" />
     <Compile Include="PrimitiveOperationsTests.fs" />
     <Compile Include="CanClassicSnippetTests.fs" />
-    <Compile Include="ElfSnippetTests.fs" />
     <Compile Include="MidiEventSnippetTests.fs" />
     <Compile Include="ModbusTcpMbapSnippetTests.fs" />
     <Compile Include="PngSliceTests.fs" />
@@ -34,6 +33,7 @@
     <ProjectReference Include="..\..\src\BinaryParsec\BinaryParsec.fsproj" />
     <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Can\BinaryParsec.Protocols.Can.fsproj" />
     <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Deflate\BinaryParsec.Protocols.Deflate.fsproj" />
+    <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Elf\BinaryParsec.Protocols.Elf.fsproj" />
     <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Modbus\BinaryParsec.Protocols.Modbus.fsproj" />
     <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Png\BinaryParsec.Protocols.Png.fsproj" />
     <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Protobuf\BinaryParsec.Protocols.Protobuf.fsproj" />

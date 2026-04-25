@@ -40,8 +40,8 @@ The active sequence is:
 
 - harden and broaden `BinaryParsec.Protocols.Modbus`
 - expand `BinaryParsec.Protocols.Png` into a fuller format package
-- evaluate `ELF` and `MIDI` as explicit follow-on package candidates
-- promote those candidates one by one only when their package scope is justified
+- evaluate `MIDI` as the remaining explicit follow-on package candidate
+- promote that candidate only when its package scope is justified
 
 ## Current Status
 
@@ -74,7 +74,8 @@ The active sequence is:
 - `BinaryParsec.Protocols.Png` now exposes package-quality chunk tokenization, validated static-PNG file parsing, and package docs tied to the current W3C PNG specification
 - `BinaryParsec.Protocols.Protobuf` now exposes package-quality Protocol Buffers wire-field tokenization, a thin owned field collector, and package docs tied to the official protobuf wire-format references
 - `BinaryParsec.Protocols.Deflate` now exposes package-quality DEFLATE block-header and dynamic-prelude tokenization, with dynamic-Huffman counts kept separate from later Huffman decoding and package docs tied to RFC 1951
-- the next work is to evaluate ELF for promotion from snippet coverage into a dedicated package
+- `BinaryParsec.Protocols.Elf` now exposes package-quality ELF header tokenization, indexed program-header lookup, and package docs tied to the generic ELF ABI header and program-header definitions
+- the next work is to evaluate MIDI for promotion from snippet coverage into a dedicated package
 
 ## Snippet Ladder
 

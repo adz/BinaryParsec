@@ -9,6 +9,8 @@ Reference material is split between handwritten reference pages and generated AP
 - [CAN Authoritative Sources](can-authoritative-sources.md)
 - [DEFLATE Package Reference](deflate-package.md)
 - [DEFLATE Authoritative Sources](deflate-authoritative-sources.md)
+- [ELF Package Reference](elf-package.md)
+- [ELF Authoritative Sources](elf-authoritative-sources.md)
 - [PNG Package Reference](png-package.md)
 - [PNG Authoritative Sources](png-authoritative-sources.md)
 - [Protocol Buffers Package Reference](protobuf-package.md)
