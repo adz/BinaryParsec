@@ -7,6 +7,8 @@ Reference material is split between handwritten reference pages and generated AP
 - [Modbus Authoritative Sources](modbus-authoritative-sources.md)
 - [CAN Package Reference](can-package.md)
 - [CAN Authoritative Sources](can-authoritative-sources.md)
+- [DEFLATE Package Reference](deflate-package.md)
+- [DEFLATE Authoritative Sources](deflate-authoritative-sources.md)
 - [PNG Package Reference](png-package.md)
 - [PNG Authoritative Sources](png-authoritative-sources.md)
 - [Protocol Buffers Package Reference](protobuf-package.md)

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="DeflateBlockType.fs" />
+    <Compile Include="DeflateBlockHeader.fs" />
+    <Compile Include="DeflateDynamicPrelude.fs" />
+    <Compile Include="DeflateParser.fs" />
+    <Compile Include="Deflate.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BinaryParsec\BinaryParsec.fsproj" />
+  </ItemGroup>
+
+</Project>

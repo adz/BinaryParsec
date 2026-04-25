@@ -42,7 +42,7 @@ Rules:
    Build it from authoritative CAN framing references stored outside the core and keep the package as a thin consumer over the matured bit/byte primitives.
 15. [x] Promote the Protocol Buffers wire-format snippet into a dedicated package only if the package boundary stays clean.
    Pull in the relevant wire-format specification material outside the core, keep field tokenization separate from message-level processing, and avoid widening the core unless a real package scenario forces it.
-16. [ ] Promote the DEFLATE prelude snippet into a dedicated package only if the package boundary stays clean.
+16. [x] Promote the DEFLATE prelude snippet into a dedicated package only if the package boundary stays clean.
    Use the relevant format specification material outside the core and keep bit-level tokenization clearly separated from later block semantics.
 17. [ ] Promote the ELF snippet into a dedicated package only if the package boundary stays clean.
    Use the ABI/spec sources outside the core and keep structural token reads separate from later header/table interpretation.
