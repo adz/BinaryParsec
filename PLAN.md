@@ -4,7 +4,7 @@
 
 The snippet-to-package promotion pass is now complete.
 
-The next stage is not another backend implementation. The next stage is to reopen the architecture around execution backends without prematurely generalizing the parser surface.
+The next stage is a DX-focused pass over the core surface, its naming, and its usage patterns before more architecture expansion.
 
 The repository baseline still assumes the .NET 10 SDK and the standard repo-root `artifacts/` output layout.
 
@@ -13,17 +13,17 @@ Documentation remains organized around the Divio split, with current design note
 The active sequence is:
 
 1. preserve the core as an F#-first contiguous backend that stays simple and fast for already-buffered inputs
-2. separate parser semantics from contiguous-only execution details before adding any incremental or streaming backend
-3. add explicit guardrails against premature optimization and premature backend abstraction in plans, docs, and task sequencing
-4. prove the needed backend seam with one real streaming-driven consumer before widening the core
-5. keep docs and tests moving in the same change as each architecture step
+2. make the parser surface read more like binary structure and less like parser machinery
+3. separate immediate-value reads, slice-taking, and bounded nested parsing more clearly in naming and examples
+4. validate the improved surface against existing protocol and format packages rather than only against toy snippets
+5. keep docs, tests, and usage guidance moving in the same change as each DX step
 
 ## Why This Order
 
-- It avoids a second premature move after the earlier contiguous-first move: jumping straight into a generalized backend abstraction without proving the seam.
-- It keeps the proven contiguous path intact for files, captures, tests, and already-buffered messages.
-- It addresses the real architectural problem directly: the current parser representation is too tightly fused to one execution strategy.
-- It keeps review grounded in one concrete pressure case instead of broad speculative infrastructure.
+- It addresses the most immediate product problem: the core is teachable only after explanation, when it should be readable on first contact.
+- It improves the odds that new protocol parsers map directly to their source specs instead of forcing users to internalize library mechanics first.
+- It keeps the proven contiguous execution model intact while improving the semantic layer on top of it.
+- It validates DX changes against real package consumers rather than letting a second abstract API layer drift away from real binary formats.
 - It preserves the core/package boundary and keeps C# concerns out of the core.
 
 ## Constraints
@@ -37,15 +37,21 @@ The active sequence is:
 - Flesh out docs in the same sequence as package work so the repo stays teachable.
 - Do not add a generalized streaming parser stack until one concrete consumer proves what must be shared and what must stay backend-specific.
 - Prefer preserving optionality over squeezing one backend harder; avoid optimizations or abstractions that make later execution strategies harder to introduce.
+- Prefer additive surface improvements first so existing consumers remain valid while the clearer style is proven out.
+- Do not hide binary structure behind convenience helpers that erase where bytes come from, how many are consumed, or where failures should point.
+- Do not let DX work harden contiguous-only assumptions into the semantic parser model.
+- Treat slice-taking, span-backed zero-copy access, and absolute offset helpers as potentially backend-specific until proven otherwise.
+- Prefer parser vocabulary that could survive multiple execution backends even when the first implementation still runs on contiguous input.
 
-## Next Architecture Track
+## Next DX Track
 
-- document the parser-semantics versus backend-mechanics split explicitly
-- choose one real streaming pressure case, most likely Modbus RTU over serial input
-- design the minimum backend seam needed to avoid switching grammar-level parsers
-- only then decide whether the seam is a new parser representation, a runner abstraction, or a narrower package-level split
-- refuse backend work that cannot name both the shared parser semantics and the intentionally backend-specific mechanics
-- prefer a package-edge serial framing seam first when one concrete consumer can be solved without widening the core
+- audit the current core surface and existing package parsers for readability, naming, and concept-boundary problems
+- introduce a lighter parser-writing surface that reduces `Contiguous.` noise and makes parser intent clearer
+- distinguish more clearly between decoded values, zero-copy slices, and bounded nested parsing
+- refactor representative package parsers into the clearer style and compare readability against the original versions
+- update introductory docs, reference pages, and examples so first-contact usage reflects the improved DX
+- then reassess which remaining pain points are naming-only, which require new combinators, and which require a deeper redesign
+- explicitly classify the parser surface into backend-neutral semantics versus contiguous-only conveniences before any second-wave API redesign
 
 ## Current Status
 
@@ -81,8 +87,12 @@ The active sequence is:
 - `BinaryParsec.Protocols.Elf` now exposes package-quality ELF header tokenization, indexed program-header lookup, and package docs tied to the generic ELF ABI header and program-header definitions
 - `BinaryParsec.Protocols.Midi` now exposes package-quality channel-event parsing with delta-time VLQs, running status, a narrow owned event model, and docs that keep package scope intentionally small
 - the backend-seam guardrail is now documented explicitly so future streaming work must justify what is shared and what remains backend-specific
-- the first concrete seam design now targets Modbus RTU over serial input and prefers package-edge frame accumulation ahead of any generalized incremental core
-- the next work is to address the parser/backend seam so real streaming consumers do not imply switching format grammars
+- the current first-contact docs now explain the basic contiguous mental model, parser naming, and `ByteSlice`, but the API still carries avoidable ceremony
+- the core now exposes an additive `BinaryParsec.Syntax` module plus `takeRemaining`, `fail`, `runExact`, `parseExactly`, and `parseRemaining` helpers to make parser intent clearer without breaking the existing contiguous surface
+- representative Modbus TCP, Modbus PDU, Protocol Buffers, CAN classic, and ELF parsers now use the lower-ceremony style to prove it against framed, bounded, bit-packed, and offset-based shapes
+- the tutorial, snippet how-to, and core reference now present the lower-ceremony style as the recommended parser-writing entry point
+- the next work is to reassess the remaining DX gaps after this additive pass and decide whether the current surface now needs a second-wave redesign
+- that reassessment must keep streaming and non-contiguous execution in scope so DX improvements do not accidentally canonize contiguous-only semantics
 
 ## Completed Promotion Pass
 

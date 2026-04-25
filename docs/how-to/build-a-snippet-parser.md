@@ -4,12 +4,68 @@ Use a snippet parser when a binary format needs one narrow reading pattern and a
 
 The examples below stay on the core `BinaryParsec` surface. They are meant to be the smallest realistic starting points for new snippet milestones.
 
+If you are still learning the basic mental model of `Contiguous.parse`, parser naming, `Contiguous.run`, or `ByteSlice`, read [Parse Your First Sized Message](../tutorials/parse-your-first-sized-message.md) first.
+
+## Read a fixed-width size prefix and then that many bytes
+
+This is the basic dependent-read pattern:
+
+- read one field
+- use its value to decide the next read
+
+```fsharp
+open BinaryParsec
+open BinaryParsec.Syntax
+
+type SizedMessage =
+    {
+        Size: uint32
+        Payload: ByteSlice
+    }
+
+let message =
+    parse {
+        let! size = u32be
+        let! payload = takeSlice (int size)
+
+        return
+            {
+                Size = size
+                Payload = payload
+            }
+    }
+```
+
+`Payload` is a `ByteSlice`, not a copied `byte[]`. It records the offset and length of the payload within the original input so the parser can stay zero-copy.
+
+If the binary format is easier to read as a nested structure than as a deferred slice, use `parseExactly` instead:
+
+```fsharp
+open BinaryParsec
+open BinaryParsec.Syntax
+
+let payload =
+    parse {
+        let! command = ``byte``
+        let! argument = u16be
+        return command, argument
+    }
+
+let message =
+    parse {
+        let! payloadLength = ``byte``
+        let! parsedPayload = parseExactly (int payloadLength) payload
+        return payloadLength, parsedPayload
+    }
+```
+
 ## Read packed flags from a byte-aligned header
 
 Use `Contiguous.bit` and `Contiguous.bits` when a format stores several fields inside one packed byte or word.
 
 ```fsharp
 open BinaryParsec
+open BinaryParsec.Syntax
 
 type Header =
     {
@@ -19,21 +75,21 @@ type Header =
     }
 
 let header =
-    Contiguous.parse {
-        let! identifier = Contiguous.bits 11
-        let! _reserved = Contiguous.bit
-        let! isExtended = Contiguous.bit
-        let! _tail = Contiguous.bits 3
-        let! _reservedLow = Contiguous.bit
-        let! _rtr = Contiguous.bit
-        let! _padding = Contiguous.bits 2
-        let! lengthCode = Contiguous.bits 4
+    parse {
+        let! identifier = bits 11
+        let! _reserved = bit
+        let! isExtended = bit
+        let! _tail = bits 3
+        let! _reservedLow = bit
+        let! _rtr = bit
+        let! _padding = bits 2
+        let! lengthCode = bits 4
 
         return
             {
                 Identifier = uint16 identifier
                 IsExtended = isExtended
-                LengthCode = byte lengthCode
+                LengthCode = uint8 lengthCode
             }
     }
 ```
@@ -46,6 +102,7 @@ Use `Contiguous.varUInt64` for the integer and `Contiguous.takeVarintPrefixed` f
 
 ```fsharp
 open BinaryParsec
+open BinaryParsec.Syntax
 
 type Field =
     {
@@ -54,10 +111,10 @@ type Field =
     }
 
 let field =
-    Contiguous.parse {
-        let! tag = Contiguous.varUInt64
+    parse {
+        let! tag = varUInt64
         let number = uint32 (tag >>> 3)
-        let! payload = Contiguous.takeVarintPrefixed
+        let! payload = takeVarintSlice
 
         return
             {
@@ -75,12 +132,13 @@ Use `Contiguous.bitsLsbFirst` when the format defines bit order from the low bit
 
 ```fsharp
 open BinaryParsec
+open BinaryParsec.Syntax
 
 let deflatePrelude =
-    Contiguous.parse {
-        let! isFinal = Contiguous.bitsLsbFirst 1
-        let! blockType = Contiguous.bitsLsbFirst 2
-        let! literalCodeCount = Contiguous.bitsLsbFirst 5
+    parse {
+        let! isFinal = bitsLsbFirst 1
+        let! blockType = bitsLsbFirst 2
+        let! literalCodeCount = bitsLsbFirst 5
 
         return isFinal = 1u, blockType, literalCodeCount + 257u
     }
@@ -94,15 +152,16 @@ Use `Contiguous.readAt` when one part of the binary layout stores an absolute by
 
 ```fsharp
 open BinaryParsec
+open BinaryParsec.Syntax
 
 let header =
-    Contiguous.parse {
-        let! tableOffset = Contiguous.u32le
+    parse {
+        let! tableOffset = u32le
         let! firstEntry =
-            Contiguous.readAt (int tableOffset) (
-                Contiguous.parse {
-                    let! entryKind = Contiguous.u16le
-                    let! entryFlags = Contiguous.u16le
+            readAt (int tableOffset) (
+                parse {
+                    let! entryKind = u16le
+                    let! entryFlags = u16le
                     return entryKind, entryFlags
                 })
 
@@ -118,6 +177,7 @@ Keep the shared payload parser separate when two transports or envelopes carry t
 
 ```fsharp
 open BinaryParsec
+open BinaryParsec.Syntax
 
 type Payload =
     {
@@ -126,9 +186,9 @@ type Payload =
     }
 
 let payload =
-    Contiguous.parse {
-        let! functionCode = Contiguous.``byte``
-        let! data = Contiguous.takeRemainingMinus 0
+    parse {
+        let! functionCode = ``byte``
+        let! data = takeRemaining
 
         return
             {
@@ -146,28 +206,29 @@ Keep stream-local state inside the parser loop when later events depend on earli
 
 ```fsharp
 open BinaryParsec
+open BinaryParsec.Syntax
 
 let rec events runningStatus acc =
-    Contiguous.parse {
-        let! remaining = Contiguous.remainingBytes
+    parse {
+        let! remaining = remainingBytes
 
         if remaining = 0 then
             return List.rev acc
         else
-            let! next = Contiguous.peekByte
+            let! next = peekByte
 
             let! status =
                 if next >= 0x80uy then
-                    Contiguous.``byte`` |> Contiguous.map ValueSome
+                    ``byte`` |> map ValueSome
                 else
-                    Contiguous.result runningStatus
+                    result runningStatus
 
             match status with
             | ValueNone ->
-                let! position = Contiguous.position
-                return! Contiguous.failAt position "Running status requires a previous event."
+                let! currentPosition = position
+                return! fail currentPosition "Running status requires a previous event."
             | ValueSome currentStatus ->
-                let! data1 = Contiguous.``byte``
+                let! data1 = ``byte``
                 return! events (ValueSome currentStatus) ((currentStatus, data1) :: acc)
     }
 ```

@@ -2,6 +2,7 @@ namespace BinaryParsec.Protocols.Modbus
 
 open System
 open BinaryParsec
+open BinaryParsec.Syntax
 
 /// Shared Modbus PDU parsing that stays transport-agnostic across RTU and TCP.
 [<RequireQualifiedAccess>]
@@ -10,12 +11,12 @@ module internal ModbusPduParser =
         $"{transportName} exception response payload must contain exactly one exception code byte."
 
     let pdu : ContiguousParser<ModbusPduSlice> =
-        Contiguous.parse {
+        parse {
             // PDU layout:
             //   function code : 1 byte
             //   payload       : N bytes
-            let! rawFunctionCode = Contiguous.``byte``
-            let! payload = Contiguous.takeRemainingMinus 0
+            let! rawFunctionCode = ``byte``
+            let! payload = takeRemaining
 
             return
                 { RawFunctionCode = rawFunctionCode

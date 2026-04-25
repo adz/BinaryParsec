@@ -1,5 +1,7 @@
 # Tutorials
 
-Guided learning material will live here as the snippet ladder fills out the core.
+Guided learning material for first-contact and end-to-end learning lives here.
 
-The first tutorial target should be a small end-to-end walkthrough that starts with bytes, builds a PNG chunk iterator, and explains which core helpers that snippet justifies.
+- [Parse Your First Sized Message](parse-your-first-sized-message.md)
+
+Next tutorial targets should expand from the basic contiguous mental model into fuller package walkthroughs such as PNG.

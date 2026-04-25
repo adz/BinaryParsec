@@ -52,6 +52,7 @@ See:
 - [Agent Rules](AGENTS.md)
 - [Plan](PLAN.md)
 - [Documentation Index](docs/README.md)
+- [Parse Your First Sized Message](docs/tutorials/parse-your-first-sized-message.md)
 - [Architecture](docs/explanation/ARCHITECTURE.md)
 - [Snippet Milestones And Core Coverage](docs/explanation/snippet-milestones-and-core-coverage.md)
 - [Build a Snippet Parser](docs/how-to/build-a-snippet-parser.md)

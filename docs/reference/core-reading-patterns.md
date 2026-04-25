@@ -4,6 +4,54 @@ This page records the core `BinaryParsec` helpers that were justified by the sni
 
 It is not generated API reference. It is a usage map for the contiguous parser surface.
 
+If you are new to the library, start with [Parse Your First Sized Message](../tutorials/parse-your-first-sized-message.md) before using this page as a checklist.
+
+## Mental Model
+
+- A `ContiguousParser<'T>` is a parser value that knows how to read a `'T` from contiguous bytes.
+- Parser bindings such as `let message = ...` usually name the thing being parsed, not an already-parsed result.
+- `Contiguous.run` executes the parser against an input span.
+- `ByteSlice` is a zero-copy `(offset, length)` descriptor into the original input, not a copied payload array.
+- `open BinaryParsec.Syntax` is the recommended parser-writing style when you want the binary layout to stay visually dominant.
+
+The most common control-flow pattern is:
+
+- read one field
+- use that field to decide the next read
+
+For example, a 4-byte size prefix followed by that many payload bytes:
+
+```fsharp
+open BinaryParsec.Syntax
+
+let message =
+    parse {
+        let! size = u32be
+        let! payload = takeSlice (int size)
+        return size, payload
+    }
+```
+
+When the payload should be parsed immediately rather than kept as a slice, prefer `parseExactly`:
+
+```fsharp
+open BinaryParsec.Syntax
+
+let payload =
+    parse {
+        let! command = ``byte``
+        let! argument = u16be
+        return command, argument
+    }
+
+let message =
+    parse {
+        let! payloadLength = ``byte``
+        let! parsedPayload = parseExactly (int payloadLength) payload
+        return payloadLength, parsedPayload
+    }
+```
+
 ## Running And Position
 
 - `Contiguous.run`
@@ -33,6 +81,8 @@ Use these when parser control flow or diagnostics depend on the current cursor.
   Matches an exact byte sequence and returns its slice.
 - `Contiguous.takeRemainingMinus`
   Returns all remaining bytes except a fixed trailing count.
+- `Contiguous.takeRemaining`
+  Returns all remaining unread bytes as one slice.
 - `ByteSlice.create`
   Creates a validated zero-copy slice descriptor.
 - `ByteSlice.asSpan`
@@ -79,6 +129,8 @@ These helpers were added for Protocol Buffers wire-format style parsing, but the
   Lifts a value into a parser without consuming input.
 - `Contiguous.failAt`
   Builds an explicit parse failure at a chosen cursor.
+- `Contiguous.fail`
+  Builds a failing parser at a chosen cursor.
 - `Contiguous.map`
   Maps a parser result without changing consumption.
 - `Contiguous.map2`
@@ -95,6 +147,10 @@ These helpers were added for Protocol Buffers wire-format style parsing, but the
   Runs two parsers and keeps the right value.
 - `Contiguous.parse`
   Computation-expression builder for parser composition.
+- `Contiguous.parseExactly`
+  Parses exactly the next bounded byte range as a nested payload.
+- `Contiguous.parseRemaining`
+  Parses all remaining unread bytes as one bounded nested payload.
 
 Use `map2`, `mergeSources`, and `and!`-style fixed-shape composition when the layout shape is static. Use `bind` or `let!`-driven control flow when later reads depend on earlier field values.
 

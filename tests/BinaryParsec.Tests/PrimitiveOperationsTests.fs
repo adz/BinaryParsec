@@ -2,6 +2,7 @@ namespace BinaryParsec.Tests
 
 open System
 open BinaryParsec
+open BinaryParsec.Syntax
 open Swensen.Unquote
 open Xunit
 
@@ -98,6 +99,15 @@ module PrimitiveOperationsTests =
         |> expectSuccess 0x1234us (ParsePosition.create 1 3)
 
     [<Fact>]
+    let ``runExact rejects trailing bytes`` () =
+        match Contiguous.runExact Contiguous.``byte`` (ReadOnlySpan<byte>([| 0x2Auy; 0x7Fuy |])) with
+        | Ok value ->
+            raise (Xunit.Sdk.XunitException($"Expected trailing-bytes failure, got %A{value}"))
+        | Error error ->
+            test <@ error.Position = ParsePosition.create 1 0 @>
+            test <@ error.Message = "Parser did not consume the full input." @>
+
+    [<Fact>]
     let ``varUInt64 reads multi-byte protobuf varints`` () =
         invoke Contiguous.varUInt64 [| 0xACuy; 0x02uy; 0xFFuy |] ParsePosition.origin
         |> expectSuccess 300UL (ParsePosition.create 2 0)
@@ -113,6 +123,42 @@ module PrimitiveOperationsTests =
             Assert.Equal<byte>([| 0x10uy; 0x20uy; 0x30uy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(input)) slice).ToArray())
         | Error error ->
             raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
+
+    [<Fact>]
+    let ``parseExactly parses a bounded nested payload and advances past it`` () =
+        let parser =
+            Contiguous.parse {
+                let! size = Contiguous.``byte``
+                let! payload = Contiguous.parseExactly (int size) Contiguous.u16be
+                let! trailer = Contiguous.``byte``
+                return size, payload, trailer
+            }
+
+        invoke parser [| 0x02uy; 0x12uy; 0x34uy; 0xFFuy |] ParsePosition.origin
+        |> expectSuccess (0x02uy, 0x1234us, 0xFFuy) (ParsePosition.create 4 0)
+
+    [<Fact>]
+    let ``parseExactly remaps nested failure offsets to the outer input`` () =
+        let parser =
+            Contiguous.parse {
+                do! Contiguous.skip 1
+                return! Contiguous.parseExactly 2 Contiguous.u32be
+            }
+
+        invoke parser [| 0xAAuy; 0x12uy; 0x34uy; 0xFFuy |] ParsePosition.origin
+        |> expectFailure (ParsePosition.create 1 0) "Unexpected end of input while reading 4 byte(s)."
+
+    [<Fact>]
+    let ``parseRemaining parses the rest of the input as one bounded payload`` () =
+        let parser =
+            Contiguous.parse {
+                let! marker = Contiguous.``byte``
+                let! payload = Contiguous.parseRemaining Contiguous.u16be
+                return marker, payload
+            }
+
+        invoke parser [| 0xA5uy; 0x12uy; 0x34uy |] ParsePosition.origin
+        |> expectSuccess (0xA5uy, 0x1234us) (ParsePosition.create 3 0)
 
     [<Fact>]
     let ``bit reads advance across byte boundary`` () =
@@ -243,6 +289,47 @@ module PrimitiveOperationsTests =
 
         invoke parser [| 0xA5uy; 0x00uy; 0x12uy; 0x34uy |] ParsePosition.origin
         |> expectSuccess (0xA5uy, 0x1234us) (ParsePosition.create 4 0)
+
+    [<Fact>]
+    let ``syntax module supports low ceremony parser definitions`` () =
+        let parser =
+            parse {
+                let! size = u16be
+                let! payload = takeSlice (int size)
+                let! checksum = ``byte``
+                return size, payload, checksum
+            }
+
+        let input = [| 0x00uy; 0x02uy; 0xDEuy; 0xADuy; 0xFFuy |]
+
+        match invoke parser input ParsePosition.origin with
+        | Ok(struct ((size, payload, checksum), nextPosition)) ->
+            test <@ size = 2us @>
+            test <@ payload = ByteSlice.create 2 2 @>
+            test <@ checksum = 0xFFuy @>
+            test <@ nextPosition = ParsePosition.create 5 0 @>
+            Assert.Equal<byte>([| 0xDEuy; 0xADuy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(input)) payload).ToArray())
+        | Error error ->
+            raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
+
+    [<Fact>]
+    let ``syntax module supports bounded nested parsing without manual slice plumbing`` () =
+        let payloadParser =
+            parse {
+                let! command = ``byte``
+                let! argument = u16be
+                return command, argument
+            }
+
+        let messageParser =
+            parse {
+                let! payloadLength = ``byte``
+                let! payload = parseExactly (int payloadLength) payloadParser
+                return payloadLength, payload
+            }
+
+        invoke messageParser [| 0x03uy; 0x7Euy; 0x12uy; 0x34uy |] ParsePosition.origin
+        |> expectSuccess (0x03uy, (0x7Euy, 0x1234us)) (ParsePosition.create 4 0)
 
     [<Fact>]
     let ``computation expression and! sequences fixed-shape parsers`` () =

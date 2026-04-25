@@ -312,9 +312,26 @@ module Contiguous =
         | Ok(struct (value, _)) -> Ok value
         | Error error -> Error error
 
+    /// Runs a parser from the origin and requires it to consume the full input.
+    let runExact (parser: ContiguousParser<'T>) (input: ReadOnlySpan<byte>) : ParseResult<'T> =
+        match parser.Invoke(input, ParsePosition.origin) with
+        | Ok(struct (value, nextPosition)) when nextPosition.ByteOffset = input.Length && nextPosition.BitOffset = 0 ->
+            Ok value
+        | Ok(struct (_, nextPosition)) ->
+            Error
+                {
+                    Position = nextPosition
+                    Message = "Parser did not consume the full input."
+                }
+        | Error error -> Error error
+
     /// Builds a failure at an explicit cursor position.
     let failAt position message : ParseResult<'T> =
         Error { Position = position; Message = message }
+
+    /// Builds a failing parser at an explicit cursor position.
+    let fail position message : ContiguousParser<'T> =
+        ContiguousParser<'T>(fun _ _ -> failAt position message)
 
     /// Lifts a value into a parser that consumes no input.
     let result value =
@@ -469,6 +486,10 @@ module Contiguous =
                     let slice = ByteSlice.create position.ByteOffset count
                     succeed slice (advanceBytes count position))
 
+    /// Returns a zero-copy slice of all remaining unread bytes.
+    let takeRemaining =
+        takeRemainingMinus 0
+
     /// Reads an unsigned 16-bit integer in big-endian byte order.
     let u16be =
         ContiguousParser<uint16>(fun input position ->
@@ -588,3 +609,69 @@ module Contiguous =
                     failAt position "Length-delimited payload exceeds supported contiguous input size."
                 else
                     takeAt (int length) input afterLength)
+
+    /// Parses exactly the next `count` bytes as a bounded nested payload.
+    let parseExactly count (parser: ContiguousParser<'T>) =
+        if count < 0 then
+            invalidArg (nameof count) "Bounded parse length must be non-negative."
+
+        ContiguousParser<'T>(fun input position ->
+            match takeAt count input position with
+            | Error error -> Error error
+            | Ok(struct (slice, nextPosition)) ->
+                let nestedInput = ByteSlice.asSpan input slice
+
+                match runExact parser nestedInput with
+                | Ok value -> succeed value nextPosition
+                | Error error ->
+                    Error
+                        {
+                            Position = ParsePosition.create (slice.Offset + error.Position.ByteOffset) error.Position.BitOffset
+                            Message = error.Message
+                        })
+
+    /// Parses all remaining unread bytes as one bounded nested payload.
+    let parseRemaining (parser: ContiguousParser<'T>) =
+        ContiguousParser<'T>(fun input position ->
+            let remaining = input.Length - position.ByteOffset
+            let nested = parseExactly remaining parser
+            nested.Invoke(input, position))
+
+/// Preferred low-ceremony surface for writing contiguous binary parsers.
+///
+/// Open this module in parser files when the goal is to keep the binary layout
+/// visually dominant while still using the existing contiguous backend.
+module Syntax =
+    let result = Contiguous.result
+    let failAt = Contiguous.failAt
+    let fail = Contiguous.fail
+    let position = Contiguous.position
+    let remainingBytes = Contiguous.remainingBytes
+    let map = Contiguous.map
+    let map2 = Contiguous.map2
+    let bind = Contiguous.bind
+    let zip = Contiguous.zip
+    let keepLeft = Contiguous.keepLeft
+    let keepRight = Contiguous.keepRight
+    let parse = Contiguous.parse
+    let ``byte`` = Contiguous.``byte``
+    let peekByte = Contiguous.peekByte
+    let skip = Contiguous.skip
+    let takeSlice = Contiguous.take
+    let takeRemaining = Contiguous.takeRemaining
+    let takeRemainingMinus = Contiguous.takeRemainingMinus
+    let expectBytes = Contiguous.expectBytes
+    let u16be = Contiguous.u16be
+    let u16le = Contiguous.u16le
+    let u32be = Contiguous.u32be
+    let u32le = Contiguous.u32le
+    let u64be = Contiguous.u64be
+    let u64le = Contiguous.u64le
+    let varUInt64 = Contiguous.varUInt64
+    let takeVarintSlice = Contiguous.takeVarintPrefixed
+    let bit = Contiguous.bit
+    let bits = Contiguous.bits
+    let bitsLsbFirst = Contiguous.bitsLsbFirst
+    let readAt = Contiguous.readAt
+    let parseExactly = Contiguous.parseExactly
+    let parseRemaining = Contiguous.parseRemaining
