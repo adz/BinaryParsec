@@ -44,6 +44,10 @@ Agents should resist speculative abstraction here. The architecture should move 
 
 ## Backend Shape
 
+Do not let the first backend harden into the parser abstraction.
+
+The current contiguous `ReadOnlySpan<byte>` runner is a useful and deliberate first backend, but it should stay a backend choice rather than a commitment that every future consumer must share the same execution model. The next architecture step should therefore be to identify the minimum seam between parser semantics and backend mechanics before adding any generalized streaming or incremental infrastructure.
+
 Do not build two separate public parser libraries. Build one semantic model with at least two execution backends:
 
 - span-backed contiguous input

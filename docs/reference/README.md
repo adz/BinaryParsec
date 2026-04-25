@@ -11,6 +11,8 @@ Reference material is split between handwritten reference pages and generated AP
 - [DEFLATE Authoritative Sources](deflate-authoritative-sources.md)
 - [ELF Package Reference](elf-package.md)
 - [ELF Authoritative Sources](elf-authoritative-sources.md)
+- [MIDI Package Reference](midi-package.md)
+- [MIDI Authoritative Sources](midi-authoritative-sources.md)
 - [PNG Package Reference](png-package.md)
 - [PNG Authoritative Sources](png-authoritative-sources.md)
 - [Protocol Buffers Package Reference](protobuf-package.md)

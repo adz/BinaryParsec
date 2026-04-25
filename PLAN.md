@@ -2,29 +2,29 @@
 
 ## Current Direction
 
-The project is now moving out of the snippet-only phase into package completion work.
+The snippet-to-package promotion pass is now complete.
 
-The core has enough coverage pressure from real snippets that the next step is to turn the existing consumers into proper package tracks without weakening the core boundary. Work should now proceed package by package: first the existing Modbus and PNG projects, then additional promoted packages driven by the snippet results.
+The next stage is not another backend implementation. The next stage is to reopen the architecture around execution backends without prematurely generalizing the parser surface.
 
-The repository baseline now assumes the .NET 10 SDK and the standard repo-root `artifacts/` output layout.
+The repository baseline still assumes the .NET 10 SDK and the standard repo-root `artifacts/` output layout.
 
-Documentation is being organized around the Divio split, with current design notes under `docs/explanation/`.
+Documentation remains organized around the Divio split, with current design notes under `docs/explanation/`.
 
 The active sequence is:
 
-1. keep the core F#-first and free to use file-scoped modules and other F#-native organization choices
-2. keep every C#-friendly surface in non-core package layers
-3. pull authoritative specs and technical references into appropriate non-core locations before or alongside package expansion
-4. complete packages in a controlled order: existing Modbus and PNG first, then additional promoted consumers
-5. keep docs and tests moving in the same change as each package step
+1. preserve the core as an F#-first contiguous backend that stays simple and fast for already-buffered inputs
+2. separate parser semantics from contiguous-only execution details before adding any incremental or streaming backend
+3. add explicit guardrails against premature optimization and premature backend abstraction in plans, docs, and task sequencing
+4. prove the needed backend seam with one real streaming-driven consumer before widening the core
+5. keep docs and tests moving in the same change as each architecture step
 
 ## Why This Order
 
-- It preserves the core/package boundary now that the snippet ladder has done its job.
-- It keeps C# concerns entirely out of the core so F# organization and ergonomics stay clean.
-- It makes package work reviewable by tying implementation and tests back to authoritative source material.
-- It prevents ad hoc package growth by turning each promotion into an explicit tracked step.
-- It keeps parser flow readable by requiring clear separation between tokenization and later processing logic.
+- It avoids a second premature move after the earlier contiguous-first move: jumping straight into a generalized backend abstraction without proving the seam.
+- It keeps the proven contiguous path intact for files, captures, tests, and already-buffered messages.
+- It addresses the real architectural problem directly: the current parser representation is too tightly fused to one execution strategy.
+- It keeps review grounded in one concrete pressure case instead of broad speculative infrastructure.
+- It preserves the core/package boundary and keeps C# concerns out of the core.
 
 ## Constraints
 
@@ -35,13 +35,15 @@ The active sequence is:
 - Keep tokenization logic and later processing logic visually separate in implementations.
 - Keep build output in the repo-root `artifacts/` folder rather than project-local `bin/` and `obj/` paths.
 - Flesh out docs in the same sequence as package work so the repo stays teachable.
+- Do not add a generalized streaming parser stack until one concrete consumer proves what must be shared and what must stay backend-specific.
+- Prefer preserving optionality over squeezing one backend harder; avoid optimizations or abstractions that make later execution strategies harder to introduce.
 
-## Package Promotion Order
+## Next Architecture Track
 
-- harden and broaden `BinaryParsec.Protocols.Modbus`
-- expand `BinaryParsec.Protocols.Png` into a fuller format package
-- evaluate `MIDI` as the remaining explicit follow-on package candidate
-- promote that candidate only when its package scope is justified
+- document the parser-semantics versus backend-mechanics split explicitly
+- choose one real streaming pressure case, most likely Modbus RTU over serial input
+- design the minimum backend seam needed to avoid switching grammar-level parsers
+- only then decide whether the seam is a new parser representation, a runner abstraction, or a narrower package-level split
 
 ## Current Status
 
@@ -75,28 +77,27 @@ The active sequence is:
 - `BinaryParsec.Protocols.Protobuf` now exposes package-quality Protocol Buffers wire-field tokenization, a thin owned field collector, and package docs tied to the official protobuf wire-format references
 - `BinaryParsec.Protocols.Deflate` now exposes package-quality DEFLATE block-header and dynamic-prelude tokenization, with dynamic-Huffman counts kept separate from later Huffman decoding and package docs tied to RFC 1951
 - `BinaryParsec.Protocols.Elf` now exposes package-quality ELF header tokenization, indexed program-header lookup, and package docs tied to the generic ELF ABI header and program-header definitions
-- the next work is to evaluate MIDI for promotion from snippet coverage into a dedicated package
+- `BinaryParsec.Protocols.Midi` now exposes package-quality channel-event parsing with delta-time VLQs, running status, a narrow owned event model, and docs that keep package scope intentionally small
+- the next work is to address the parser/backend seam so real streaming consumers do not imply switching format grammars
 
-## Snippet Ladder
+## Completed Promotion Pass
 
-Use the smallest realistic snippet that proves each missing reading pattern:
+The snippet ladder has now been promoted into package work where justified:
 
 1. PNG chunk iterator
-   Drives repeated bounded reads, chunk iteration, and reusable magic matching.
+   Promoted into `BinaryParsec.Protocols.Png`.
 2. CAN classic frame header snippet
-   Drives multi-bit extraction, packed flags, and compact frame metadata.
+   Promoted into `BinaryParsec.Protocols.Can`.
 3. Protocol Buffers wire-field snippet
-   Drives varints, field tags, length-delimited payloads, and unknown-field skipping.
+   Promoted into `BinaryParsec.Protocols.Protobuf`.
 4. DEFLATE block prelude snippet
-   Drives arbitrary-width bit extraction and bit-order correctness.
+   Promoted into `BinaryParsec.Protocols.Deflate`.
 5. ELF header and table-entry snippet
-   Drives width/endian coverage, offset-based reads, and dependent layout parsing.
+   Promoted into `BinaryParsec.Protocols.Elf`.
 6. Modbus TCP MBAP snippet
-   Drives layered transport framing over shared payload parsing.
+   Folded into the broader `BinaryParsec.Protocols.Modbus` package.
 7. MIDI event snippet
-   Drives stateful byte-stream parsing and informs later incremental-input design.
-
-These snippets have already served their core-pressure role. They are now candidate package seeds rather than the main execution model.
+   Promoted into `BinaryParsec.Protocols.Midi`.
 
 ## Update Rule
 

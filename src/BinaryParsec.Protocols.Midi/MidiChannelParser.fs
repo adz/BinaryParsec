@@ -1,26 +1,9 @@
-namespace BinaryParsec.Tests
+namespace BinaryParsec.Protocols.Midi
 
 open BinaryParsec
 
-/// Identifies the tiny subset of MIDI channel events covered by this snippet.
 [<RequireQualifiedAccess>]
-type MidiChannelEventKind =
-    | NoteOn
-    | ProgramChange
-
-/// Captures one tiny MIDI channel event with its decoded delta-time and running status.
-type MidiChannelEventSnippet =
-    {
-        DeltaTime: uint32
-        Status: byte
-        Channel: byte
-        Kind: MidiChannelEventKind
-        Data1: byte
-        Data2: byte voption
-    }
-
-[<RequireQualifiedAccess>]
-module internal MidiEventSnippet =
+module internal MidiChannelParser =
     let private failAt position message =
         ContiguousParser<_>(fun _ _ -> Contiguous.failAt position message)
 
@@ -57,14 +40,12 @@ module internal MidiEventSnippet =
                 if status < 0xF0uy then
                     return ValueSome status
                 else
-                    return! failAt statusPosition $"MIDI snippet only supports channel voice status bytes, got 0x{status:X2}."
+                    return! failAt statusPosition $"MIDI package supports only channel voice status bytes, got 0x{status:X2}."
             else
                 return ValueNone
         }
 
     let private eventData status =
-        let channel = status &&& 0x0Fuy
-
         match status &&& 0xF0uy with
         | 0x90uy ->
             Contiguous.parse {
@@ -75,8 +56,6 @@ module internal MidiEventSnippet =
                     {
                         DeltaTime = 0u
                         Status = status
-                        Channel = channel
-                        Kind = MidiChannelEventKind.NoteOn
                         Data1 = note
                         Data2 = ValueSome velocity
                     }
@@ -89,8 +68,6 @@ module internal MidiEventSnippet =
                     {
                         DeltaTime = 0u
                         Status = status
-                        Channel = channel
-                        Kind = MidiChannelEventKind.ProgramChange
                         Data1 = program
                         Data2 = ValueNone
                     }
@@ -98,14 +75,16 @@ module internal MidiEventSnippet =
         | _ ->
             let messageType = status &&& 0xF0uy
             ContiguousParser<_>(fun _ current ->
-                Contiguous.failAt current $"MIDI snippet only supports Note On and Program Change channel events, got status 0x{messageType:X2}.")
+                Contiguous.failAt
+                    current
+                    $"MIDI package currently supports only Note On and Program Change channel events, got status 0x{messageType:X2}.")
 
-    let rec private eventStream (runningStatus: byte voption) (events: MidiChannelEventSnippet list) : ContiguousParser<MidiChannelEventSnippet list> =
+    let rec private eventStream (runningStatus: byte voption) (events: ResizeArray<MidiChannelEventSlice>) =
         Contiguous.parse {
             let! remaining = Contiguous.remainingBytes
 
             if remaining = 0 then
-                return List.rev events
+                return events.ToArray()
             else
                 let! delta = deltaTime
                 let! eventPosition = Contiguous.position
@@ -122,12 +101,12 @@ module internal MidiEventSnippet =
                 else
                     let! event = eventData status
 
-                    return!
-                        eventStream
-                            (ValueSome status)
-                            ({ event with DeltaTime = delta } :: events)
+                    events.Add { event with DeltaTime = delta }
+                    return! eventStream (ValueSome status) events
         }
 
-    /// Parses a tiny MIDI event stream with delta-time VLQs and running status across channel events.
-    let channelEventStream : ContiguousParser<MidiChannelEventSnippet list> =
-        eventStream ValueNone []
+    /// Parses a MIDI channel-event stream with delta-time VLQs and running status.
+    let channelEventStream : ContiguousParser<MidiChannelEventSlice array> =
+        ContiguousParser<MidiChannelEventSlice array>(fun input position ->
+            let parser = eventStream ValueNone (ResizeArray())
+            parser.Invoke(input, position))

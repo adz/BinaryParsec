@@ -29,6 +29,8 @@ The current repo layout already follows that split:
   The DEFLATE package over the core, with block-header and dynamic-prelude tokenization kept separate from later Huffman decoding.
 - `src/BinaryParsec.Protocols.Elf`
   The ELF package over the core, with header tokenization and indexed program-header lookup kept separate from later ABI interpretation.
+- `src/BinaryParsec.Protocols.Midi`
+  The MIDI package over the core, with delta-time and running-status tokenization kept separate from later event interpretation.
 - `src/BinaryParsec.Protocols.Png`
   The PNG format package over the core, with zero-copy chunk tokenization and validated file-level parsing.
 - `src/BinaryParsec.Protocols.Modbus`
@@ -43,7 +45,7 @@ The architectural bias is a dual-layer design:
 
 The core library stays F#-first. C# usability matters most at the `BinaryParsec.Protocols.*` layer.
 
-The current package-completion track now includes PNG, Modbus, CAN, Protocol Buffers wire-format, DEFLATE, and ELF work while keeping the core boundary intact.
+The current package-completion track now includes PNG, Modbus, CAN, Protocol Buffers wire-format, DEFLATE, ELF, and MIDI work while keeping the core boundary intact.
 
 See:
 

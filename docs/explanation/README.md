@@ -9,6 +9,7 @@ Design notes and architecture rationale live here.
 - [CAN Package Shape](can-package-shape.md)
 - [DEFLATE Package Shape](deflate-package-shape.md)
 - [ELF Package Shape](elf-package-shape.md)
+- [MIDI Package Shape](midi-package-shape.md)
 - [Modbus Package Shape](modbus-package-shape.md)
 - [PNG Package Shape](png-package-shape.md)
 - [Protocol Buffers Package Shape](protobuf-package-shape.md)

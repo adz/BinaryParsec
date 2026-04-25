@@ -10,3 +10,4 @@ Task-focused guides for package consumers live here.
 - [Parse a Protocol Buffers Wire Message](parse-protobuf-wire-message.md)
 - [Parse a DEFLATE Dynamic Block Prelude](parse-deflate-dynamic-prelude.md)
 - [Parse an ELF Header and Program Header](parse-elf-header-and-program-header.md)
+- [Parse a MIDI Channel Event Stream](parse-midi-channel-event-stream.md)
