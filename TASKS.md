@@ -34,5 +34,17 @@ Rules:
    Use it to pressure parser state and to inform the later incremental-input backend design.
 11. [x] Flesh out docs in parallel with each snippet milestone.
    Add one explanation page, one how-to, and the relevant reference updates whenever a new capability family lands.
-12. [ ] Return to full protocol and format packages once the common reading paths are mostly covered.
-   Resume CAN, expand PNG, and broaden Modbus/other packages using the matured core rather than growing them ad hoc.
+12. [ ] Rework the existing Modbus package to follow the clarified package rules end to end.
+   Keep the C#-friendly layer fully outside the core, pull in authoritative Modbus source material in a non-core location, use layout comments where they make RTU and TCP frame/token boundaries easier to follow, and keep transport tokenization separate from later PDU processing.
+13. [ ] Expand the existing PNG package into a fuller format package under the clarified rules.
+   Keep spec and format references outside the core, preserve clear separation between chunk tokenization and later PNG processing, and use layout comments only where the byte structure benefits from them.
+14. [ ] Promote CAN from snippet coverage into a dedicated package.
+   Build it from authoritative CAN framing references stored outside the core and keep the package as a thin consumer over the matured bit/byte primitives.
+15. [ ] Promote the Protocol Buffers wire-format snippet into a dedicated package only if the package boundary stays clean.
+   Pull in the relevant wire-format specification material outside the core, keep field tokenization separate from message-level processing, and avoid widening the core unless a real package scenario forces it.
+16. [ ] Promote the DEFLATE prelude snippet into a dedicated package only if the package boundary stays clean.
+   Use the relevant format specification material outside the core and keep bit-level tokenization clearly separated from later block semantics.
+17. [ ] Promote the ELF snippet into a dedicated package only if the package boundary stays clean.
+   Use the ABI/spec sources outside the core and keep structural token reads separate from later header/table interpretation.
+18. [ ] Promote the MIDI event snippet into a dedicated package only if the package boundary stays clean.
+   Pull in the relevant MIDI technical references outside the core and keep event tokenization and running-status state handling visually distinct from later event interpretation.
