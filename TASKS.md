@@ -26,7 +26,7 @@ Rules:
    The tutorial, how-to, and reference paths should explain the mental model, show the preferred surface, and explain when to use slices versus nested parsing.
 7. [x] Add tests for the new DX surface and keep the zero-allocation guarantees for the underlying hot-path primitives.
    Cover aliases or wrappers, bounded nested parsing, clearer error mapping, and at least one end-to-end parser example that reads close to its source format.
-8. [ ] Classify the parser surface into backend-neutral semantics versus contiguous-only conveniences.
+8. [x] Classify the parser surface into backend-neutral semantics versus contiguous-only conveniences.
    The goal is to prevent DX work from locking the library into the current contiguous runner while still preserving the readability gains.
 9. [ ] Reassess the remaining DX gaps after the first additive pass.
    Decide which issues are solved by naming and examples, which need more combinators, and whether any larger surface redesign is justified without compromising future streaming or non-contiguous backends.

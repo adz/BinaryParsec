@@ -642,6 +642,9 @@ module Contiguous =
 /// Open this module in parser files when the goal is to keep the binary layout
 /// visually dominant while still using the existing contiguous backend.
 module Syntax =
+    // --- Backend-Neutral Semantics ---
+    // These concepts are expected to survive across execution backends.
+
     let result = Contiguous.result
     let failAt = Contiguous.failAt
     let fail = Contiguous.fail
@@ -655,11 +658,7 @@ module Syntax =
     let keepRight = Contiguous.keepRight
     let parse = Contiguous.parse
     let ``byte`` = Contiguous.``byte``
-    let peekByte = Contiguous.peekByte
     let skip = Contiguous.skip
-    let takeSlice = Contiguous.take
-    let takeRemaining = Contiguous.takeRemaining
-    let takeRemainingMinus = Contiguous.takeRemainingMinus
     let expectBytes = Contiguous.expectBytes
     let u16be = Contiguous.u16be
     let u16le = Contiguous.u16le
@@ -668,10 +667,18 @@ module Syntax =
     let u64be = Contiguous.u64be
     let u64le = Contiguous.u64le
     let varUInt64 = Contiguous.varUInt64
-    let takeVarintSlice = Contiguous.takeVarintPrefixed
     let bit = Contiguous.bit
     let bits = Contiguous.bits
     let bitsLsbFirst = Contiguous.bitsLsbFirst
-    let readAt = Contiguous.readAt
     let parseExactly = Contiguous.parseExactly
     let parseRemaining = Contiguous.parseRemaining
+
+    // --- Contiguous-Only Conveniences ---
+    // These concepts rely on the presence of a stable, contiguous buffer in memory.
+
+    let peekByte = Contiguous.peekByte
+    let takeSlice = Contiguous.take
+    let takeRemaining = Contiguous.takeRemaining
+    let takeRemainingMinus = Contiguous.takeRemainingMinus
+    let takeVarintSlice = Contiguous.takeVarintPrefixed
+    let readAt = Contiguous.readAt

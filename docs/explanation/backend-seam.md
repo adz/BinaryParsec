@@ -49,6 +49,30 @@ The following concerns are execution mechanics and should not be prematurely fla
 
 These differences are real. The architecture should expose a seam around them instead of pretending the same low-level payload and cursor model works equally well for contiguous buffers and live serial input.
 
+## Surface Classification
+
+To keep the architecture honest, we now classify the current parser surface into backend-neutral semantics and contiguous-only conveniences.
+
+### Backend-Neutral Semantics
+
+These concepts are expected to survive across execution backends. They define the "what" of parsing rather than the "how" of memory management.
+
+- **Logical Flow**: `result`, `fail`, `failAt`, `map`, `map2`, `bind`, `zip`, `keepLeft`, `keepRight`, `parse` (CE).
+- **Position Tracking**: `position` (abstract cursor), `remainingBytes` (where total size is known).
+- **Primitive Value Reads**: `byte`, `u16be`, `u16le`, `u32be`, `u32le`, `u64be`, `u64le`, `varUInt64`.
+- **Bit-Level Reads**: `bit`, `bits`, `bitsLsbFirst`.
+- **Control**: `skip`, `expectBytes`.
+- **Bounded Composition**: `parseExactly`, `parseRemaining`.
+
+### Contiguous-Only Conveniences
+
+These concepts rely on the presence of a single, stable, contiguous buffer in memory (`ReadOnlySpan<byte>`). They may not translate directly to streaming or non-contiguous backends without significant trade-offs (like copying or buffering).
+
+- **Zero-Copy Slicing**: `ByteSlice` (the type itself), `takeSlice`, `takeRemaining`, `takeRemainingMinus`, `takeVarintSlice`.
+- **Lookahead**: `peekByte` (requires at least one byte of reliable lookahead/buffering).
+- **Absolute Offsets**: `readAt` (assumes random access across the entire input).
+- **Runner API**: `ContiguousParser` (the delegate signature), `run`, `runExact` (the `ReadOnlySpan<byte>` entry points).
+
 ## Guardrails
 
 Any backend work should satisfy all of these rules before new infrastructure lands:

@@ -89,10 +89,11 @@ The active sequence is:
 - the backend-seam guardrail is now documented explicitly so future streaming work must justify what is shared and what remains backend-specific
 - the current first-contact docs now explain the basic contiguous mental model, parser naming, and `ByteSlice`, but the API still carries avoidable ceremony
 - the core now exposes an additive `BinaryParsec.Syntax` module plus `takeRemaining`, `fail`, `runExact`, `parseExactly`, and `parseRemaining` helpers to make parser intent clearer without breaking the existing contiguous surface
+- the `BinaryParsec.Syntax` module is now explicitly classified into backend-neutral semantics versus contiguous-only conveniences to preserve future backend optionality
 - representative Modbus TCP, Modbus PDU, Protocol Buffers, CAN classic, and ELF parsers now use the lower-ceremony style to prove it against framed, bounded, bit-packed, and offset-based shapes
 - the tutorial, snippet how-to, and core reference now present the lower-ceremony style as the recommended parser-writing entry point
 - the next work is to reassess the remaining DX gaps after this additive pass and decide whether the current surface now needs a second-wave redesign
-- that reassessment must keep streaming and non-contiguous execution in scope so DX improvements do not accidentally canonize contiguous-only semantics
+- the backend-seam classification is now documented and reflected in the core to ensure DX improvements do not accidentally canonize contiguous-only semantics
 
 ## Completed Promotion Pass
 
