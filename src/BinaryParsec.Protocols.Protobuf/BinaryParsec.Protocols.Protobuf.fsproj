@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="ProtobufWireType.fs" />
+    <Compile Include="ProtobufFieldTag.fs" />
+    <Compile Include="ProtobufFieldValueSlice.fs" />
+    <Compile Include="ProtobufFieldSlice.fs" />
+    <Compile Include="ProtobufFieldValue.fs" />
+    <Compile Include="ProtobufField.fs" />
+    <Compile Include="ProtobufWireParser.fs" />
+    <Compile Include="ProtobufWireMaterializer.fs" />
+    <Compile Include="ProtobufWire.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BinaryParsec\BinaryParsec.fsproj" />
+  </ItemGroup>
+
+</Project>

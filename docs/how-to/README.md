@@ -7,3 +7,4 @@ Task-focused guides for package consumers live here.
 - [Parse a PNG File](parse-png-file.md)
 - [Parse a Modbus RTU Frame](parse-modbus-rtu-frame.md)
 - [Parse a Modbus TCP Frame](parse-modbus-tcp-frame.md)
+- [Parse a Protocol Buffers Wire Message](parse-protobuf-wire-message.md)

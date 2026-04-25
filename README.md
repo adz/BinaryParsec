@@ -29,6 +29,8 @@ The current repo layout already follows that split:
   The PNG format package over the core, with zero-copy chunk tokenization and validated file-level parsing.
 - `src/BinaryParsec.Protocols.Modbus`
   The Modbus RTU and TCP protocol package over the core, with shared PDU processing.
+- `src/BinaryParsec.Protocols.Protobuf`
+  The Protocol Buffers wire-format package over the core, with wire-field tokenization and a thin field-stream collector.
 
 The architectural bias is a dual-layer design:
 
@@ -37,7 +39,7 @@ The architectural bias is a dual-layer design:
 
 The core library stays F#-first. C# usability matters most at the `BinaryParsec.Protocols.*` layer.
 
-The current package-completion track now includes PNG, Modbus, and CAN, while keeping the core boundary intact.
+The current package-completion track now includes PNG, Modbus, CAN, and Protocol Buffers wire-format work while keeping the core boundary intact.
 
 See:
 

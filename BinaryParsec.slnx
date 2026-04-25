@@ -6,8 +6,10 @@
   </Configurations>
   <Folder Name="/src/">
     <Project Path="src/BinaryParsec/BinaryParsec.fsproj" />
-    <Project Path="src/BinaryParsec.Protocols.Png/BinaryParsec.Protocols.Png.fsproj" />
+    <Project Path="src/BinaryParsec.Protocols.Can/BinaryParsec.Protocols.Can.fsproj" />
     <Project Path="src/BinaryParsec.Protocols.Modbus/BinaryParsec.Protocols.Modbus.fsproj" />
+    <Project Path="src/BinaryParsec.Protocols.Png/BinaryParsec.Protocols.Png.fsproj" />
+    <Project Path="src/BinaryParsec.Protocols.Protobuf/BinaryParsec.Protocols.Protobuf.fsproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/BinaryParsec.Tests/BinaryParsec.Tests.fsproj" />

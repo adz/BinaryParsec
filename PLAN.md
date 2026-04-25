@@ -40,7 +40,7 @@ The active sequence is:
 
 - harden and broaden `BinaryParsec.Protocols.Modbus`
 - expand `BinaryParsec.Protocols.Png` into a fuller format package
-- evaluate `Protocol Buffers`, `DEFLATE`, `ELF`, and `MIDI` as explicit follow-on package candidates
+- evaluate `DEFLATE`, `ELF`, and `MIDI` as explicit follow-on package candidates
 - promote those candidates one by one only when their package scope is justified
 
 ## Current Status
@@ -72,7 +72,8 @@ The active sequence is:
 - a tiny Modbus TCP MBAP snippet now covers MBAP transport validation and shared Modbus PDU parsing over a distinct transport frame
 - a tiny MIDI channel-event stream snippet now covers delta-time VLQs, running status reuse, and state threaded across byte-stream events
 - `BinaryParsec.Protocols.Png` now exposes package-quality chunk tokenization, validated static-PNG file parsing, and package docs tied to the current W3C PNG specification
-- the next work is to evaluate Protocol Buffers for promotion from snippet coverage into a dedicated package
+- `BinaryParsec.Protocols.Protobuf` now exposes package-quality Protocol Buffers wire-field tokenization, a thin owned field collector, and package docs tied to the official protobuf wire-format references
+- the next work is to evaluate DEFLATE for promotion from snippet coverage into a dedicated package
 
 ## Snippet Ladder
 
