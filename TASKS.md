@@ -30,3 +30,20 @@ Rules:
    The goal is to prevent DX work from locking the library into the current contiguous runner while still preserving the readability gains.
 9. [ ] Reassess the remaining DX gaps after the first additive pass.
    Decide which issues are solved by naming and examples, which need more combinators, and whether any larger surface redesign is justified without compromising future streaming or non-contiguous backends.
+
+## Modbus Interpreted Payloads
+
+10. [ ] Define a comprehensive discriminated union for standard Modbus payloads.
+    Include typed records for common public functions (0x01-0x06, 0x0F, 0x10) covering both requests and responses.
+11. [ ] Implement sub-parsers for standard Modbus function payloads using the core syntax.
+    Ensure strict validation of lengths, count-to-byte-count ratios, and address ranges according to the Modbus Application Protocol V1.1b3.
+12. [ ] Add a protocol-level dispatcher that maps function codes to interpreted sub-parsers.
+    Support a fallback to raw byte arrays for user-defined or unhandled function codes to preserve extensibility.
+13. [ ] Introduce interpreted facades to `ModbusRtu` and `ModbusTcp`.
+    Provide new `TryParse` and `Parse` entry points that return interpreted frame models while maintaining the existing raw-PDU API for low-level consumers.
+14. [ ] Ensure interpreted payloads remain C#-friendly in the public surface.
+    Use class-based hierarchies or tagged-union patterns that are idiomatic for C# consumption in the facade layer.
+15. [ ] Add exhaustive test suites for interpreted Modbus payloads.
+    Include valid frames, malformed payloads (e.g., mismatched byte counts), and exception responses for every supported function code.
+16. [ ] Update Modbus package documentation and how-to guides.
+    Showcase interpreted payload usage as the primary way to interact with registers, coils, and discrete inputs.
