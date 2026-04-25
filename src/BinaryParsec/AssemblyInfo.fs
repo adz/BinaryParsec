@@ -4,4 +4,5 @@ open System.Runtime.CompilerServices
 
 [<assembly: InternalsVisibleTo("BinaryParsec.Protocols.Png")>]
 [<assembly: InternalsVisibleTo("BinaryParsec.Protocols.Modbus")>]
+[<assembly: InternalsVisibleTo("BinaryParsec.Protocols.Can")>]
 do ()

@@ -40,7 +40,6 @@ The active sequence is:
 
 - harden and broaden `BinaryParsec.Protocols.Modbus`
 - expand `BinaryParsec.Protocols.Png` into a fuller format package
-- promote `CAN` into its own package
 - evaluate `Protocol Buffers`, `DEFLATE`, `ELF`, and `MIDI` as explicit follow-on package candidates
 - promote those candidates one by one only when their package scope is justified
 
@@ -52,8 +51,10 @@ The active sequence is:
 - the PNG slice now covers signature matching, one-chunk reads, and chunk iteration through `IEND` with zero-copy chunk envelopes
 - `BinaryParsec.Protocols.Modbus` now exposes package-quality RTU parse entry points, stable owned frame models, and C#-friendly overloads
 - `BinaryParsec.Protocols.Modbus` now tokenizes RTU and TCP transport frames separately, reuses one shared Modbus PDU layer, and exposes stable RTU/TCP facades
+- `BinaryParsec.Protocols.Can` now exposes classic controller-frame tokenization, authoritative-source-backed package docs, and a validated owned frame facade for base-format classic CAN
 - the public surface now carries the needed purpose-and-fit comments and concise API docs
 - Modbus package docs now cover RTU and TCP usage, package reference material, the stable-facade versus low-level-parser split, and the authoritative Modbus source documents that drive the package
+- CAN package docs now cover the classic controller-frame scope, the split between packed tokenization and owned-model materialization, and the authoritative CAN sources that drive the package
 - the snippet ladder is now documented with capability rationale, a core snippet how-to, and a handwritten reference map for the relevant contiguous parser helpers
 - the repo direction now explicitly treats the C# layer as independent from the core so the core can stay F#-first and use file-scoped modules freely
 - package expansion now requires authoritative source material to live outside the core and to guide implementation, docs, and tests
@@ -71,7 +72,7 @@ The active sequence is:
 - a tiny Modbus TCP MBAP snippet now covers MBAP transport validation and shared Modbus PDU parsing over a distinct transport frame
 - a tiny MIDI channel-event stream snippet now covers delta-time VLQs, running status reuse, and state threaded across byte-stream events
 - `BinaryParsec.Protocols.Png` now exposes package-quality chunk tokenization, validated static-PNG file parsing, and package docs tied to the current W3C PNG specification
-- the next work is to promote CAN from snippet coverage into a dedicated package
+- the next work is to evaluate Protocol Buffers for promotion from snippet coverage into a dedicated package
 
 ## Snippet Ladder
 

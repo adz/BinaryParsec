@@ -38,7 +38,7 @@ Rules:
    Keep the C#-friendly layer fully outside the core, pull in authoritative Modbus source material in a non-core location, use layout comments where they make RTU and TCP frame/token boundaries easier to follow, and keep transport tokenization separate from later PDU processing.
 13. [x] Expand the existing PNG package into a fuller format package under the clarified rules.
    Keep spec and format references outside the core, preserve clear separation between chunk tokenization and later PNG processing, and use layout comments only where the byte structure benefits from them.
-14. [ ] Promote CAN from snippet coverage into a dedicated package.
+14. [x] Promote CAN from snippet coverage into a dedicated package.
    Build it from authoritative CAN framing references stored outside the core and keep the package as a thin consumer over the matured bit/byte primitives.
 15. [ ] Promote the Protocol Buffers wire-format snippet into a dedicated package only if the package boundary stays clean.
    Pull in the relevant wire-format specification material outside the core, keep field tokenization separate from message-level processing, and avoid widening the core unless a real package scenario forces it.

@@ -5,6 +5,8 @@ Reference material is split between handwritten reference pages and generated AP
 - [Core Reading Patterns Reference](core-reading-patterns.md)
 - [Modbus Package Reference](modbus-package.md)
 - [Modbus Authoritative Sources](modbus-authoritative-sources.md)
+- [CAN Package Reference](can-package.md)
+- [CAN Authoritative Sources](can-authoritative-sources.md)
 - [PNG Package Reference](png-package.md)
 - [PNG Authoritative Sources](png-authoritative-sources.md)
 - [Generated API Reference](api/README.md)

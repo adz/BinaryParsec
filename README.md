@@ -23,6 +23,8 @@ The current repo layout already follows that split:
 
 - `src/BinaryParsec`
   Core cursor model, primitives, combinators, and diagnostics.
+- `src/BinaryParsec.Protocols.Can`
+  The CAN classic controller-frame package over the core, with packed-header tokenization and a stable owned frame facade.
 - `src/BinaryParsec.Protocols.Png`
   The PNG format package over the core, with zero-copy chunk tokenization and validated file-level parsing.
 - `src/BinaryParsec.Protocols.Modbus`
@@ -35,7 +37,7 @@ The architectural bias is a dual-layer design:
 
 The core library stays F#-first. C# usability matters most at the `BinaryParsec.Protocols.*` layer.
 
-The current package-completion track is PNG first and then CAN, while keeping the core boundary intact.
+The current package-completion track now includes PNG, Modbus, and CAN, while keeping the core boundary intact.
 
 See:
 

@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <Compile Include="CanClassicSnippet.fs" />
+    <Compile Include="CanClassicPackageTests.fs" />
     <Compile Include="DeflateBlockPreludeSnippet.fs" />
     <Compile Include="ElfSnippet.fs" />
     <Compile Include="MidiEventSnippet.fs" />
@@ -33,6 +34,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BinaryParsec\BinaryParsec.fsproj" />
+    <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Can\BinaryParsec.Protocols.Can.fsproj" />
     <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Png\BinaryParsec.Protocols.Png.fsproj" />
     <ProjectReference Include="..\..\src\BinaryParsec.Protocols.Modbus\BinaryParsec.Protocols.Modbus.fsproj" />
   </ItemGroup>
