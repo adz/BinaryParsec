@@ -2,6 +2,8 @@
 
 This note defines the first intended shape of the contiguous-input backend.
 
+It should be read together with [Backend Seam](backend-seam.md), which explains why this backend must stay a backend choice rather than silently hardening into the only parser model the repository can support.
+
 It exists to make the low-level model explicit before the core implementation grows around it. The goal is not to lock every type name in place. The goal is to fix the semantics that later primitives and combinators should depend on.
 
 ## Why Start Here

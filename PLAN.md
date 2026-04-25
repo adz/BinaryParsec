@@ -44,6 +44,8 @@ The active sequence is:
 - choose one real streaming pressure case, most likely Modbus RTU over serial input
 - design the minimum backend seam needed to avoid switching grammar-level parsers
 - only then decide whether the seam is a new parser representation, a runner abstraction, or a narrower package-level split
+- refuse backend work that cannot name both the shared parser semantics and the intentionally backend-specific mechanics
+- prefer a package-edge serial framing seam first when one concrete consumer can be solved without widening the core
 
 ## Current Status
 
@@ -78,6 +80,8 @@ The active sequence is:
 - `BinaryParsec.Protocols.Deflate` now exposes package-quality DEFLATE block-header and dynamic-prelude tokenization, with dynamic-Huffman counts kept separate from later Huffman decoding and package docs tied to RFC 1951
 - `BinaryParsec.Protocols.Elf` now exposes package-quality ELF header tokenization, indexed program-header lookup, and package docs tied to the generic ELF ABI header and program-header definitions
 - `BinaryParsec.Protocols.Midi` now exposes package-quality channel-event parsing with delta-time VLQs, running status, a narrow owned event model, and docs that keep package scope intentionally small
+- the backend-seam guardrail is now documented explicitly so future streaming work must justify what is shared and what remains backend-specific
+- the first concrete seam design now targets Modbus RTU over serial input and prefers package-edge frame accumulation ahead of any generalized incremental core
 - the next work is to address the parser/backend seam so real streaming consumers do not imply switching format grammars
 
 ## Completed Promotion Pass
