@@ -51,8 +51,9 @@ The active sequence is:
 - the PNG and Modbus RTU slices now live in separate `BinaryParsec.Protocols.*` projects and are validated with offset-aware diagnostics
 - the PNG slice now covers signature matching, one-chunk reads, and chunk iteration through `IEND` with zero-copy chunk envelopes
 - `BinaryParsec.Protocols.Modbus` now exposes package-quality RTU parse entry points, stable owned frame models, and C#-friendly overloads
+- `BinaryParsec.Protocols.Modbus` now tokenizes RTU and TCP transport frames separately, reuses one shared Modbus PDU layer, and exposes stable RTU/TCP facades
 - the public surface now carries the needed purpose-and-fit comments and concise API docs
-- Modbus package docs now cover RTU usage, package reference material, and the stable-facade versus low-level-parser split
+- Modbus package docs now cover RTU and TCP usage, package reference material, the stable-facade versus low-level-parser split, and the authoritative Modbus source documents that drive the package
 - the snippet ladder is now documented with capability rationale, a core snippet how-to, and a handwritten reference map for the relevant contiguous parser helpers
 - the repo direction now explicitly treats the C# layer as independent from the core so the core can stay F#-first and use file-scoped modules freely
 - package expansion now requires authoritative source material to live outside the core and to guide implementation, docs, and tests
@@ -69,7 +70,7 @@ The active sequence is:
 - a tiny ELF header-plus-program-header snippet now covers 32-bit and 64-bit width reads, little-endian and big-endian selection, and absolute offset-based table lookups
 - a tiny Modbus TCP MBAP snippet now covers MBAP transport validation and shared Modbus PDU parsing over a distinct transport frame
 - a tiny MIDI channel-event stream snippet now covers delta-time VLQs, running status reuse, and state threaded across byte-stream events
-- the next work is to convert the current package and snippet consumers into explicit package tracks under the clarified rules
+- the next work is to expand PNG into a fuller package under the clarified package rules
 
 ## Snippet Ladder
 

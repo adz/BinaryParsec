@@ -25,6 +25,8 @@
     <Compile Include="PngSliceTests.fs" />
     <Compile Include="ModbusRtuSliceTests.fs" />
     <Compile Include="ModbusRtuFacadeTests.fs" />
+    <Compile Include="ModbusTcpSliceTests.fs" />
+    <Compile Include="ModbusTcpFacadeTests.fs" />
     <Compile Include="ZeroAllocationHotPathTests.fs" />
     <Compile Include="TestHost.fs" />
   </ItemGroup>

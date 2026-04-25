@@ -7,22 +7,12 @@ open BinaryParsec
 [<RequireQualifiedAccess>]
 module internal ModbusRtuParser =
     let internal incompleteFrameMessage =
-        "Modbus RTU frame must contain address, function code, and CRC."
-
-    let internal malformedExceptionPayloadMessage =
-        "Modbus RTU exception response payload must contain exactly one exception code byte."
+        "Modbus RTU frame must contain address, PDU, and CRC."
 
     let internal crcMismatchMessage expected actual =
         $"Modbus RTU CRC mismatch. Expected 0x{expected:X4}, computed 0x{actual:X4}."
 
     let private minimumFrameLength = 4
-
-    let private header =
-        Contiguous.parse {
-            let! address = Contiguous.``byte``
-            and! functionCode = Contiguous.``byte``
-            return struct (address, functionCode)
-        }
 
     let private computeCrc (input: ReadOnlySpan<byte>) (slice: ByteSlice) =
         let mutable crc = 0xFFFFus
@@ -50,15 +40,19 @@ module internal ModbusRtuParser =
                 if remaining < minimumFrameLength then
                     Contiguous.failAt position incompleteFrameMessage
                 else
-                    let payloadLength = remaining - minimumFrameLength
+                    let pduLength = remaining - 3
 
-                    match header.Invoke(input, position) with
+                    match Contiguous.``byte``.Invoke(input, position) with
                     | Error error -> Error error
-                    | Ok(struct (struct (address, functionCode), afterHeader)) ->
+                    | Ok(struct (address, afterAddress)) ->
+                        // RTU ADU layout:
+                        //   address : 1 byte
+                        //   PDU     : N bytes
+                        //   CRC     : 2 bytes, little-endian on the wire
                         let frameBytes = ByteSlice.create position.ByteOffset (remaining - 2)
-                        let payload = ByteSlice.create afterHeader.ByteOffset payloadLength
+                        let pdu = ByteSlice.create afterAddress.ByteOffset pduLength
 
-                        match Contiguous.u16leAt input (ParsePosition.create (afterHeader.ByteOffset + payloadLength) 0) with
+                        match Contiguous.u16leAt input (ParsePosition.create (afterAddress.ByteOffset + pduLength) 0) with
                         | Error error -> Error error
                         | Ok(struct (expected, nextPosition)) ->
                             let actual = computeCrc input frameBytes
@@ -66,8 +60,7 @@ module internal ModbusRtuParser =
                             Ok(
                                 struct (
                                     { Address = address
-                                      FunctionCode = functionCode
-                                      Payload = payload
+                                      Pdu = pdu
                                       Crc =
                                         { Expected = expected
                                           Actual = actual

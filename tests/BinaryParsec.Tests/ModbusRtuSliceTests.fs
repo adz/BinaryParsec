@@ -34,9 +34,8 @@ module ModbusRtuSliceTests =
         match Contiguous.run ModbusRtuParser.frame (ReadOnlySpan<byte>(requestFrame)) with
         | Ok frame ->
             Assert.Equal(0x01uy, frame.Address)
-            Assert.Equal(0x03uy, frame.FunctionCode)
-            Assert.Equal(ByteSlice.create 2 4, frame.Payload)
-            Assert.Equal<byte>([| 0x00uy; 0x00uy; 0x00uy; 0x0Auy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(requestFrame)) frame.Payload).ToArray())
+            Assert.Equal(ByteSlice.create 1 5, frame.Pdu)
+            Assert.Equal<byte>([| 0x03uy; 0x00uy; 0x00uy; 0x00uy; 0x0Auy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(requestFrame)) frame.Pdu).ToArray())
             Assert.Equal(0xCDC5us, frame.Crc.Expected)
             Assert.Equal(0xCDC5us, frame.Crc.Actual)
             Assert.True(frame.Crc.IsMatch)
@@ -48,9 +47,8 @@ module ModbusRtuSliceTests =
         match Contiguous.run ModbusRtuParser.frame (ReadOnlySpan<byte>(responseFrame)) with
         | Ok frame ->
             Assert.Equal(0x11uy, frame.Address)
-            Assert.Equal(0x03uy, frame.FunctionCode)
-            Assert.Equal(ByteSlice.create 2 7, frame.Payload)
-            Assert.Equal<byte>([| 0x06uy; 0xAEuy; 0x41uy; 0x56uy; 0x52uy; 0x43uy; 0x40uy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(responseFrame)) frame.Payload).ToArray())
+            Assert.Equal(ByteSlice.create 1 8, frame.Pdu)
+            Assert.Equal<byte>([| 0x03uy; 0x06uy; 0xAEuy; 0x41uy; 0x56uy; 0x52uy; 0x43uy; 0x40uy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(responseFrame)) frame.Pdu).ToArray())
             Assert.Equal(0xAD49us, frame.Crc.Expected)
             Assert.Equal(0xAD49us, frame.Crc.Actual)
             Assert.True(frame.Crc.IsMatch)
@@ -60,7 +58,7 @@ module ModbusRtuSliceTests =
     [<Fact>]
     let ``frame requires address function and crc bytes`` () =
         invoke ModbusRtuParser.frame [| 0x01uy; 0x03uy; 0xC5uy |] ParsePosition.origin
-        |> expectError "Modbus RTU frame must contain address, function code, and CRC." ParsePosition.origin
+        |> expectError "Modbus RTU frame must contain address, PDU, and CRC." ParsePosition.origin
 
     [<Fact>]
     let ``frame reports incomplete frame at current offset`` () =
@@ -71,7 +69,7 @@ module ModbusRtuSliceTests =
             |]
 
         invoke ModbusRtuParser.frame input (ParsePosition.create 1 0)
-        |> expectError "Modbus RTU frame must contain address, function code, and CRC." (ParsePosition.create 1 0)
+        |> expectError "Modbus RTU frame must contain address, PDU, and CRC." (ParsePosition.create 1 0)
 
     [<Fact>]
     let ``frame rejects bit offset starts`` () =
@@ -90,9 +88,8 @@ module ModbusRtuSliceTests =
         match Contiguous.run ModbusRtuParser.frame (ReadOnlySpan<byte>(corruptedCrcFrame)) with
         | Ok frame ->
             Assert.Equal(0x01uy, frame.Address)
-            Assert.Equal(0x03uy, frame.FunctionCode)
-            Assert.Equal(ByteSlice.create 2 4, frame.Payload)
-            Assert.Equal<byte>([| 0x00uy; 0x00uy; 0x00uy; 0x0Auy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(corruptedCrcFrame)) frame.Payload).ToArray())
+            Assert.Equal(ByteSlice.create 1 5, frame.Pdu)
+            Assert.Equal<byte>([| 0x03uy; 0x00uy; 0x00uy; 0x00uy; 0x0Auy |], (ByteSlice.asSpan (ReadOnlySpan<byte>(corruptedCrcFrame)) frame.Pdu).ToArray())
             Assert.Equal(0x00C5us, frame.Crc.Expected)
             Assert.Equal(0xCDC5us, frame.Crc.Actual)
             Assert.False(frame.Crc.IsMatch)

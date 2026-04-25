@@ -26,7 +26,7 @@ The current repo layout already follows that split:
 - `src/BinaryParsec.Protocols.Png`
   The PNG format pressure-test slice over the core.
 - `src/BinaryParsec.Protocols.Modbus`
-  The Modbus RTU protocol package over the core.
+  The Modbus RTU and TCP protocol package over the core, with shared PDU processing.
 
 The architectural bias is a dual-layer design:
 

@@ -1,6 +1,6 @@
 # Parse a Modbus RTU Frame
 
-Use `BinaryParsec.Protocols.Modbus.ModbusRtu` when application code needs a stable RTU frame parser rather than a low-level parser value.
+Use `BinaryParsec.Protocols.Modbus.ModbusRtu` when application code needs an RTU parser that validates CRC framing and then materializes the shared Modbus PDU.
 
 ## Result-based parsing
 
@@ -31,3 +31,4 @@ let frame = ModbusRtu.ParseFrame frameBytes
 - `IsExceptionResponse` tells you when the frame is an exception response.
 - `ExceptionCode` is only populated for exception responses.
 - `Payload` is an owned copy, so the parsed frame does not depend on the original buffer staying alive.
+- Modbus TCP uses the sibling `ModbusTcp` facade instead of reusing the RTU frame API.

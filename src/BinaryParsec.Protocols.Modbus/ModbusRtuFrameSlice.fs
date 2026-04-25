@@ -8,7 +8,6 @@ open BinaryParsec
 type internal ModbusRtuFrameSlice =
     {
         Address: byte
-        FunctionCode: byte
-        Payload: ByteSlice
+        Pdu: ByteSlice
         Crc: ModbusRtuCrcResult
     }

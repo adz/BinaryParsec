@@ -34,7 +34,7 @@ Rules:
    Use it to pressure parser state and to inform the later incremental-input backend design.
 11. [x] Flesh out docs in parallel with each snippet milestone.
    Add one explanation page, one how-to, and the relevant reference updates whenever a new capability family lands.
-12. [ ] Rework the existing Modbus package to follow the clarified package rules end to end.
+12. [x] Rework the existing Modbus package to follow the clarified package rules end to end.
    Keep the C#-friendly layer fully outside the core, pull in authoritative Modbus source material in a non-core location, use layout comments where they make RTU and TCP frame/token boundaries easier to follow, and keep transport tokenization separate from later PDU processing.
 13. [ ] Expand the existing PNG package into a fuller format package under the clarified rules.
    Keep spec and format references outside the core, preserve clear separation between chunk tokenization and later PNG processing, and use layout comments only where the byte structure benefits from them.

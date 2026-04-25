@@ -15,38 +15,25 @@ type ModbusRtu private () =
                 { Position = ParsePosition.create (input.Length - 2) 0
                   Message = ModbusRtuParser.crcMismatchMessage slice.Crc.Expected slice.Crc.Actual }
         | Ok slice ->
-            let rawFunctionCode = slice.FunctionCode
-            let isExceptionResponse = (rawFunctionCode &&& 0x80uy) = 0x80uy
+            let pduBytes = ByteSlice.asSpan input slice.Pdu
 
-            let functionCode =
-                if isExceptionResponse then
-                    rawFunctionCode &&& 0x7Fuy
-                else
-                    rawFunctionCode
-
-            let payload = (ByteSlice.asSpan input slice.Payload).ToArray()
-
-            if isExceptionResponse && payload.Length <> 1 then
+            match Contiguous.run ModbusPduParser.pdu pduBytes with
+            | Error error ->
                 Error
-                    {
-                        Position = ParsePosition.create slice.Payload.Offset 0
-                        Message = ModbusRtuParser.malformedExceptionPayloadMessage
-                    }
-            else
-                let exceptionCode =
-                    if isExceptionResponse then
-                        Nullable payload[0]
-                    else
-                        Nullable()
-
-                Ok
-                    { Address = slice.Address
-                      RawFunctionCode = rawFunctionCode
-                      FunctionCode = functionCode
-                      Payload = payload
-                      IsExceptionResponse = isExceptionResponse
-                      ExceptionCode = exceptionCode
-                      Crc = slice.Crc }
+                    { Position = ParsePosition.create (slice.Pdu.Offset + error.Position.ByteOffset) error.Position.BitOffset
+                      Message = error.Message }
+            | Ok pduSlice ->
+                match ModbusPduParser.materialize "Modbus RTU" pduBytes slice.Pdu.Offset pduSlice with
+                | Error error -> Error error
+                | Ok pdu ->
+                    Ok
+                        { Address = slice.Address
+                          RawFunctionCode = pdu.RawFunctionCode
+                          FunctionCode = pdu.FunctionCode
+                          Payload = pdu.Payload
+                          IsExceptionResponse = pdu.IsExceptionResponse
+                          ExceptionCode = pdu.ExceptionCode
+                          Crc = slice.Crc }
 
     /// Parses one Modbus RTU frame and returns a result-oriented model for F# callers.
     static member TryParseFrame(input: ReadOnlySpan<byte>) : ParseResult<ModbusRtuFrame> =
