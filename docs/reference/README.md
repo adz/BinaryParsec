@@ -5,6 +5,8 @@ Reference material is split between handwritten reference pages and generated AP
 - [Core Reading Patterns Reference](core-reading-patterns.md)
 - [Modbus Package Reference](modbus-package.md)
 - [Modbus Authoritative Sources](modbus-authoritative-sources.md)
+- [PNG Package Reference](png-package.md)
+- [PNG Authoritative Sources](png-authoritative-sources.md)
 - [Generated API Reference](api/README.md)
 
 Generated API tools should consume the staged assembly and XML docs under `artifacts/api-docs/` rather than writing back into the source tree.

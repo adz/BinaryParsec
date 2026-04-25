@@ -70,7 +70,8 @@ The active sequence is:
 - a tiny ELF header-plus-program-header snippet now covers 32-bit and 64-bit width reads, little-endian and big-endian selection, and absolute offset-based table lookups
 - a tiny Modbus TCP MBAP snippet now covers MBAP transport validation and shared Modbus PDU parsing over a distinct transport frame
 - a tiny MIDI channel-event stream snippet now covers delta-time VLQs, running status reuse, and state threaded across byte-stream events
-- the next work is to expand PNG into a fuller package under the clarified package rules
+- `BinaryParsec.Protocols.Png` now exposes package-quality chunk tokenization, validated static-PNG file parsing, and package docs tied to the current W3C PNG specification
+- the next work is to promote CAN from snippet coverage into a dedicated package
 
 ## Snippet Ladder
 

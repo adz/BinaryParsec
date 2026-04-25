@@ -16,6 +16,14 @@ module PngSliceTests =
             Assert.Equal(expectedMessage, error.Message)
             Assert.Equal(expectedPosition, error.Position)
 
+    let private expectRunError expectedMessage expectedPosition result =
+        match result with
+        | Ok value ->
+            raise (Xunit.Sdk.XunitException($"Expected error, got value %A{value}"))
+        | Error error ->
+            Assert.Equal(expectedMessage, error.Message)
+            Assert.Equal(expectedPosition, error.Position)
+
     let private input =
         [|
             0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy
@@ -39,7 +47,7 @@ module PngSliceTests =
             0x00uy; 0x00uy; 0x00uy; 0x02uy
             0x49uy; 0x44uy; 0x41uy; 0x54uy
             0x78uy; 0x9Cuy
-            0x12uy; 0x34uy; 0x56uy; 0x78uy
+            0x62uy; 0xA4uy; 0x91uy; 0x2Buy
             0x00uy; 0x00uy; 0x00uy; 0x00uy
             0x49uy; 0x45uy; 0x4Euy; 0x44uy
             0xAEuy; 0x42uy; 0x60uy; 0x82uy
@@ -77,6 +85,34 @@ module PngSliceTests =
             Assert.Equal(ByteSlice.create 0 8, parsed.Signature)
             Assert.Equal(13u, parsed.FirstChunk.Length)
             Assert.Equal(ByteSlice.create 16 13, parsed.FirstChunk.Payload)
+        | Error error ->
+            raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
+
+    [<Fact>]
+    let ``file parser materializes png header and chunks`` () =
+        match Contiguous.run Png.file (ReadOnlySpan<byte>(chunkedInput)) with
+        | Ok parsed ->
+            Assert.Equal(1u, parsed.Header.Width)
+            Assert.Equal(1u, parsed.Header.Height)
+            Assert.Equal(8uy, parsed.Header.BitDepth)
+            Assert.Equal(PngColorType.Truecolor, parsed.Header.ColorType)
+            Assert.Equal(PngInterlaceMethod.None, parsed.Header.InterlaceMethod)
+            Assert.Equal(3, parsed.Chunks.Length)
+            Assert.Equal("IHDR", parsed.Chunks[0].ChunkType)
+            Assert.Equal("IDAT", parsed.Chunks[1].ChunkType)
+            Assert.Equal<byte>([| 0x78uy; 0x9Cuy |], parsed.Chunks[1].Data)
+            Assert.Equal("IEND", parsed.Chunks[2].ChunkType)
+            Assert.Empty(parsed.Chunks[2].Data)
+        | Error error ->
+            raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
+
+    [<Fact>]
+    let ``try parse file returns the same materialized png model`` () =
+        match Png.tryParseFile (ReadOnlySpan<byte>(chunkedInput)) with
+        | Ok parsed ->
+            Assert.Equal(1u, parsed.Header.Width)
+            Assert.Equal(3, parsed.Chunks.Length)
+            Assert.Equal<uint32>(0x62A4912Bu, parsed.Chunks[1].Crc)
         | Error error ->
             raise (Xunit.Sdk.XunitException($"Expected success, got %A{error}"))
 
@@ -155,3 +191,60 @@ module PngSliceTests =
 
         Png.chunkStream.Invoke(ReadOnlySpan<byte>(truncatedSecondPayload), ParsePosition.origin)
         |> expectError "Unexpected end of input while reading 2 byte(s)." (ParsePosition.create 41 0)
+
+    [<Fact>]
+    let ``file parser rejects crc mismatch at chunk crc field`` () =
+        let invalidCrc = Array.copy chunkedInput
+        invalidCrc[43] <- 0x00uy
+
+        Png.tryParseFile(ReadOnlySpan<byte>(invalidCrc))
+        |> expectRunError "PNG chunk CRC mismatch for IDAT. Expected 0x00A4912B, computed 0x62A4912B." (ParsePosition.create 43 0)
+
+    [<Fact>]
+    let ``file parser rejects missing idat chunk`` () =
+        let missingIdat =
+            [|
+                0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy
+                0x00uy; 0x00uy; 0x00uy; 0x0Duy
+                0x49uy; 0x48uy; 0x44uy; 0x52uy
+                0x00uy; 0x00uy; 0x00uy; 0x01uy
+                0x00uy; 0x00uy; 0x00uy; 0x01uy
+                0x08uy; 0x02uy; 0x00uy; 0x00uy; 0x00uy
+                0x90uy; 0x77uy; 0x53uy; 0xDEuy
+                0x00uy; 0x00uy; 0x00uy; 0x00uy
+                0x49uy; 0x45uy; 0x4Euy; 0x44uy
+                0xAEuy; 0x42uy; 0x60uy; 0x82uy
+            |]
+
+        Png.tryParseFile(ReadOnlySpan<byte>(missingIdat))
+        |> expectRunError "PNG must contain at least one IDAT chunk." (ParsePosition.create 8 0)
+
+    [<Fact>]
+    let ``file parser rejects trailing bytes after iend`` () =
+        let trailingBytes = Array.append chunkedInput [| 0x00uy |]
+
+        Png.tryParseFile(ReadOnlySpan<byte>(trailingBytes))
+        |> expectRunError "PNG datastream must end immediately after the IEND chunk." (ParsePosition.create chunkedInput.Length 0)
+
+    [<Fact>]
+    let ``file parser rejects indexed color header without palette`` () =
+        let indexedWithoutPalette =
+            [|
+                0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy
+                0x00uy; 0x00uy; 0x00uy; 0x0Duy
+                0x49uy; 0x48uy; 0x44uy; 0x52uy
+                0x00uy; 0x00uy; 0x00uy; 0x01uy
+                0x00uy; 0x00uy; 0x00uy; 0x01uy
+                0x08uy; 0x03uy; 0x00uy; 0x00uy; 0x00uy
+                0x28uy; 0xCBuy; 0x34uy; 0xBBuy
+                0x00uy; 0x00uy; 0x00uy; 0x01uy
+                0x49uy; 0x44uy; 0x41uy; 0x54uy
+                0x00uy
+                0x28uy; 0x38uy; 0x7Duy; 0xE8uy
+                0x00uy; 0x00uy; 0x00uy; 0x00uy
+                0x49uy; 0x45uy; 0x4Euy; 0x44uy
+                0xAEuy; 0x42uy; 0x60uy; 0x82uy
+            |]
+
+        Png.tryParseFile(ReadOnlySpan<byte>(indexedWithoutPalette))
+        |> expectRunError "PNG indexed-color images must contain a PLTE chunk before IDAT." (ParsePosition.create 8 0)

@@ -1,59 +1,34 @@
 namespace BinaryParsec.Protocols.Png
 
 open System
-open System.Runtime.CompilerServices
 open BinaryParsec
 
-/// Captures the byte boundaries of one PNG chunk within the original input.
-///
-/// The PNG package keeps chunk envelope slices zero-copy so callers can inspect
-/// chunk boundaries without forcing payload materialization.
-[<Struct; IsReadOnlyAttribute>]
-type PngChunkEnvelope =
-    {
-        Length: uint32
-        ChunkType: ByteSlice
-        Payload: ByteSlice
-        Crc: ByteSlice
-    }
-
-/// Captures the PNG signature and first chunk as the initial PNG pressure-test slice.
-[<Struct; IsReadOnlyAttribute>]
-type PngSlice =
-    {
-        Signature: ByteSlice
-        FirstChunk: PngChunkEnvelope
-    }
-
-/// Captures the PNG signature and chunk envelopes for a small whole-file chunk walk.
-///
-/// This stays intentionally small: it exists to pressure repeated bounded reads and
-/// chunk iteration in the core before the package grows into fuller PNG support.
-[<Struct; IsReadOnlyAttribute>]
-type PngChunkStream =
-    {
-        Signature: ByteSlice
-        Chunks: PngChunkEnvelope array
-    }
-
-/// The first PNG-focused parsers that pressure the contiguous core with a real format.
 [<RequireQualifiedAccess>]
-module Png =
-    let private maxSupportedChunkLength = uint32 Int32.MaxValue - 4u
-
-    let private signatureBytes =
+module internal PngParser =
+    let internal signatureBytes =
         [| 0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy |]
 
-    let private iendChunkTypeBytes =
+    let internal ihdrChunkTypeBytes =
+        [| 0x49uy; 0x48uy; 0x44uy; 0x52uy |]
+
+    let internal plteChunkTypeBytes =
+        [| 0x50uy; 0x4Cuy; 0x54uy; 0x45uy |]
+
+    let internal idatChunkTypeBytes =
+        [| 0x49uy; 0x44uy; 0x41uy; 0x54uy |]
+
+    let internal iendChunkTypeBytes =
         [| 0x49uy; 0x45uy; 0x4Euy; 0x44uy |]
 
-    let private invalidSignatureMessage =
+    let internal invalidSignatureMessage =
         "Input does not start with the PNG file signature."
 
-    let private invalidLengthMessage =
+    let internal invalidLengthMessage =
         "PNG chunk length exceeds supported contiguous input size."
 
-    let private chunkTypeMatches (expectedBytes: byte array) (input: ReadOnlySpan<byte>) (chunkType: ByteSlice) =
+    let private maxSupportedChunkLength = uint32 Int32.MaxValue - 4u
+
+    let internal chunkTypeMatches (expectedBytes: byte array) (input: ReadOnlySpan<byte>) (chunkType: ByteSlice) =
         let actual = ByteSlice.asSpan input chunkType
         let mutable matches = actual.Length = expectedBytes.Length
         let mutable index = 0
@@ -66,10 +41,8 @@ module Png =
 
         matches
 
-    /// Matches the 8-byte PNG file signature and returns its input slice.
     let signature = Contiguous.expectBytes signatureBytes invalidSignatureMessage
 
-    /// Parses one PNG chunk envelope and returns zero-copy slices for its parts.
     let chunkEnvelope =
         ContiguousParser<PngChunkEnvelope>(fun input position ->
             match Contiguous.u32beAt input position with
@@ -97,7 +70,6 @@ module Png =
                                     )
                                 ))
 
-    /// Parses the PNG signature followed by chunk envelopes through the `IEND` terminator.
     let chunkStream =
         ContiguousParser<PngChunkStream>(fun input position ->
             match signature.Invoke(input, position) with
@@ -115,8 +87,7 @@ module Png =
                     | Ok(struct (chunk, nextPosition)) ->
                         chunks.Add(chunk)
                         current <- nextPosition
-                        let chunkType = chunk.ChunkType
-                        finished <- chunkTypeMatches iendChunkTypeBytes input chunkType
+                        finished <- chunkTypeMatches iendChunkTypeBytes input chunk.ChunkType
 
                 match failure with
                 | ValueSome error -> Error error
@@ -129,7 +100,6 @@ module Png =
                         )
                     ))
 
-    /// Parses the PNG signature followed by the first chunk.
     let initialSlice =
         Contiguous.parse {
             let! parsedSignature = signature

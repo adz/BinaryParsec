@@ -8,7 +8,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="BinaryParsec.Protocols.Png.fs" />
+    <Compile Include="PngChunkEnvelope.fs" />
+    <Compile Include="PngSlice.fs" />
+    <Compile Include="PngChunkStream.fs" />
+    <Compile Include="PngColorType.fs" />
+    <Compile Include="PngInterlaceMethod.fs" />
+    <Compile Include="PngImageHeader.fs" />
+    <Compile Include="PngChunk.fs" />
+    <Compile Include="PngFile.fs" />
+    <Compile Include="PngParser.fs" />
+    <Compile Include="PngMaterializer.fs" />
+    <Compile Include="Png.fs" />
   </ItemGroup>
 
   <ItemGroup>
