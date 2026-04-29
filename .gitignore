@@ -18,8 +18,14 @@ TestResults/
 
 # IDEs
 .vs/
+.vscode/
 .idea/
 
 # Rider / ReSharper
 _ReSharper*/
 *.DotSettings.user
+
+# Docusaurus
+website/.docusaurus/
+website/build/
+website/node_modules/

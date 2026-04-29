@@ -2,9 +2,9 @@
 
 ## Current Direction
 
-The snippet-to-package promotion pass is now complete.
+The snippet-to-package promotion pass is complete, and the first DX pass has now restored a clean build plus consistent parser behavior across the promoted packages.
 
-The next stage is a DX-focused pass over the core surface, its naming, and its usage patterns before more architecture expansion.
+The active stage is now the docs overhaul: a Docusaurus site, user-intent navigation, curated API hubs, executable examples, and a versioned archive for the current docs line.
 
 The repository baseline still assumes the .NET 10 SDK and the standard repo-root `artifacts/` output layout.
 
@@ -13,18 +13,19 @@ Documentation remains organized around the Divio split, with current design note
 The active sequence is:
 
 1. preserve the core as an F#-first contiguous backend that stays simple and fast for already-buffered inputs
-2. make the parser surface read more like binary structure and less like parser machinery
-3. separate immediate-value reads, slice-taking, and bounded nested parsing more clearly in naming and examples
-4. validate the improved surface against existing protocol and format packages rather than only against toy snippets
-5. keep docs, tests, and usage guidance moving in the same change as each DX step
+2. close the remaining allocation regressions introduced during the additive DX pass without reopening broader API churn
+3. finish hardening the docs site content on top of the standard Docusaurus build and versioned docs routing
+4. keep the source-linked executable examples generation step reliable as docs evolve
+5. rewrite the API landing pages as family hubs with clear member maps and follow-on detail pages
+6. run the consistency pass across guides, integrations, examples, and reference pages so the prose reads like one manual
 
 ## Why This Order
 
-- It addresses the most immediate product problem: the core is teachable only after explanation, when it should be readable on first contact.
-- It improves the odds that new protocol parsers map directly to their source specs instead of forcing users to internalize library mechanics first.
-- It keeps the proven contiguous execution model intact while improving the semantic layer on top of it.
-- It validates DX changes against real package consumers rather than letting a second abstract API layer drift away from real binary formats.
-- It preserves the core/package boundary and keeps C# concerns out of the core.
+- The parser surface is now much closer to the intended readability target, so the next risk is not naming confusion but losing performance confidence in the hot paths.
+- A deliberate docs site can make the existing guide, how-to, reference, and explanation material feel like one coherent manual instead of a directory tree.
+- Executable examples and source links will make the docs more trustworthy without widening the public API.
+- Versioning the docs now keeps the current line and the archived line cleanly separated while the site structure is still small enough to manage.
+- The remaining parser-architecture work should stay visible in the plan, but it does not need to block the docs site rollout.
 
 ## Constraints
 
@@ -34,7 +35,7 @@ The active sequence is:
 - Use layout comments to show binary structure only where they materially improve readability; rely on self-explanatory code everywhere else.
 - Keep tokenization logic and later processing logic visually separate in implementations.
 - Keep build output in the repo-root `artifacts/` folder rather than project-local `bin/` and `obj/` paths.
-- Flesh out docs in the same sequence as package work so the repo stays teachable.
+- Flesh out docs in the same sequence as the docs site structure so the repo stays teachable.
 - Do not add a generalized streaming parser stack until one concrete consumer proves what must be shared and what must stay backend-specific.
 - Prefer preserving optionality over squeezing one backend harder; avoid optimizations or abstractions that make later execution strategies harder to introduce.
 - Prefer additive surface improvements first so existing consumers remain valid while the clearer style is proven out.
@@ -42,16 +43,16 @@ The active sequence is:
 - Do not let DX work harden contiguous-only assumptions into the semantic parser model.
 - Treat slice-taking, span-backed zero-copy access, and absolute offset helpers as potentially backend-specific until proven otherwise.
 - Prefer parser vocabulary that could survive multiple execution backends even when the first implementation still runs on contiguous input.
+- Do not let the push for handled non-contiguous input weaken the contiguous backend's current ergonomics or hot-path expectations.
+- Keep visual parser-layout XML comments compact and structural; they should show framing and offsets, not repeat prose already covered in module docs.
 
-## Next DX Track
+## Next Track
 
-- audit the current core surface and existing package parsers for readability, naming, and concept-boundary problems
-- introduce a lighter parser-writing surface that reduces `Contiguous.` noise and makes parser intent clearer
-- distinguish more clearly between decoded values, zero-copy slices, and bounded nested parsing
-- refactor representative package parsers into the clearer style and compare readability against the original versions
-- update introductory docs, reference pages, and examples so first-contact usage reflects the improved DX
-- then reassess which remaining pain points are naming-only, which require new combinators, and which require a deeper redesign
-- explicitly classify the parser surface into backend-neutral semantics versus contiguous-only conveniences before any second-wave API redesign
+- finish the remaining allocation-focused cleanup in the computation-expression path and the few package parsers still under zero-allocation tests
+- finish hardening the docs site content now that the standard Docusaurus scaffold and versioned archive build correctly
+- keep the executable examples pipeline and source-link sync step part of the docs build path
+- finish the curated family hubs for the API and integration pages
+- run the docs build plus tests and verify the generated output is source-aware and navigable
 
 ## Current Status
 
@@ -92,8 +93,10 @@ The active sequence is:
 - the `BinaryParsec.Syntax` module is now explicitly classified into backend-neutral semantics versus contiguous-only conveniences to preserve future backend optionality
 - representative Modbus TCP, Modbus PDU, Protocol Buffers, CAN classic, and ELF parsers now use the lower-ceremony style to prove it against framed, bounded, bit-packed, and offset-based shapes
 - the tutorial, snippet how-to, and core reference now present the lower-ceremony style as the recommended parser-writing entry point
-- the next work is to reassess the remaining DX gaps after this additive pass and decide whether the current surface now needs a second-wave redesign
-- the backend-seam classification is now documented and reflected in the core to ensure DX improvements do not accidentally canonize contiguous-only semantics
+- the compiler and parser-behavior regressions uncovered during the DX sweep have been fixed, and the remaining known DX regression is confined to the zero-allocation hot-path tests for the computation-expression path
+- the docs overhaul is now the active focus, with a standard Docusaurus build, intent buckets, executable example pages, and a generated `0.1.0` versioned archive in place
+- the docs build and preview scripts now run through Docusaurus directly, without custom SSR require hooks or alias loaders
+- the backend-seam classification remains documented and reflected in the core so the docs work does not accidentally canonize contiguous-only semantics
 
 ## Completed Promotion Pass
 
