@@ -2,6 +2,7 @@ namespace BinaryParsec.Protocols.Modbus
 
 open System
 open BinaryParsec
+open BinaryParsec.Syntax
 
 /// Low-level Modbus RTU parsing over the shared contiguous-input core.
 [<RequireQualifiedAccess>]
@@ -32,39 +33,40 @@ module internal ModbusRtuParser =
     /// Parses one contiguous Modbus RTU frame and reports the transmitted versus computed CRC.
     let frame =
         ContiguousParser<ModbusRtuFrameSlice>(fun input position ->
-            if position.BitOffset <> 0 then
-                Contiguous.failAt position "Byte-aligned primitive cannot run when the cursor is at a bit offset."
-            else
-                let remaining = input.Length - position.ByteOffset
-
-                if remaining < minimumFrameLength then
-                    Contiguous.failAt position incompleteFrameMessage
-                else
-                    let pduLength = remaining - 3
-
-                    match Contiguous.``byte``.Invoke(input, position) with
+            match Contiguous.requireByteAligned.Invoke(input, position) with
+            | Error error -> Error error
+            | Ok struct ((), _) ->
+                match Contiguous.position.Invoke(input, position) with
+                | Error error -> Error error
+                | Ok struct (start, _) ->
+                    match Contiguous.remainingBytes.Invoke(input, position) with
                     | Error error -> Error error
-                    | Ok(struct (address, afterAddress)) ->
-                        // RTU ADU layout:
-                        //   address : 1 byte
-                        //   PDU     : N bytes
-                        //   CRC     : 2 bytes, little-endian on the wire
-                        let frameBytes = ByteSlice.create position.ByteOffset (remaining - 2)
-                        let pdu = ByteSlice.create afterAddress.ByteOffset pduLength
+                    | Ok struct (rem, _) ->
+                        if rem < minimumFrameLength then
+                            Contiguous.failAt start incompleteFrameMessage
+                        else
+                            match Contiguous.``byte``.Invoke(input, position) with
+                            | Error error -> Error error
+                            | Ok struct (address, afterAddress) ->
+                                let pduLength = rem - 3
 
-                        match Contiguous.u16leAt input (ParsePosition.create (afterAddress.ByteOffset + pduLength) 0) with
-                        | Error error -> Error error
-                        | Ok(struct (expected, nextPosition)) ->
-                            let actual = computeCrc input frameBytes
+                                match Contiguous.takeAt pduLength input afterAddress with
+                                | Error error -> Error error
+                                | Ok struct (pdu, afterPdu) ->
+                                    match Contiguous.u16leAt input afterPdu with
+                                    | Error error -> Error error
+                                    | Ok struct (expectedCrc, nextPosition) ->
+                                        let frameBytes = ByteSlice.create start.ByteOffset (rem - 2)
+                                        let actualCrc = computeCrc input frameBytes
 
-                            Ok(
-                                struct (
-                                    { Address = address
-                                      Pdu = pdu
-                                      Crc =
-                                        { Expected = expected
-                                          Actual = actual
-                                          IsMatch = expected = actual } },
-                                    nextPosition
-                                )
-                            ))
+                                        Ok
+                                            struct (
+                                                { Address = address
+                                                  Pdu = pdu
+                                                  Crc =
+                                                    { Expected = expectedCrc
+                                                      Actual = actualCrc
+                                                      IsMatch = expectedCrc = actualCrc } },
+                                                nextPosition
+                                            )
+        )

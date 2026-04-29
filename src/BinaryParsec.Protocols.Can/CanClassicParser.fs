@@ -13,36 +13,32 @@ module internal CanClassicParser =
 
     let frame =
         parse {
-            let! start = position
+            do! requireByteAligned
+            let! baseIdentifier = bits 11
+            let! _reserved = bit
+            let! isExtendedFrame = bit
+            let! _sidlTail = bits 3
+            let! _reservedHigh = bit
+            let! isRemoteTransmissionRequest = bit
+            let! _reservedLow = bits 2
+            let! dlcPosition = position
+            let! dlc = bits 4
 
-            if start.BitOffset <> 0 then
-                return! fail start "Byte-aligned primitive cannot run when the cursor is at a bit offset."
+            if dlc > 8u then
+                return! fail dlcPosition (invalidDlcMessage dlc)
             else
-                let! baseIdentifier = bits 11
-                let! _reserved = bit
-                let! isExtendedFrame = bit
-                let! _sidlTail = bits 3
-                let! _reservedHigh = bit
-                let! isRemoteTransmissionRequest = bit
-                let! _reservedLow = bits 2
-                let! dlcPosition = position
-                let! dlc = bits 4
+                let payloadLength = if isRemoteTransmissionRequest then 0 else int dlc
 
-                if dlc > 8u then
-                    return! fail dlcPosition (invalidDlcMessage dlc)
-                else
-                    let payloadLength = if isRemoteTransmissionRequest then 0 else int dlc
+                // Controller-buffer layout:
+                //   SIDH/SIDL : packed 11-bit base identifier plus EXIDE marker
+                //   DLC byte  : reserved bit, RTR bit, reserved bits, DLC nibble
+                //   DATA      : present only for non-remote classic frames
+                let! payload = takeSlice payloadLength
 
-                    // Controller-buffer layout:
-                    //   SIDH/SIDL : packed 11-bit base identifier plus EXIDE marker
-                    //   DLC byte  : reserved bit, RTR bit, reserved bits, DLC nibble
-                    //   DATA      : present only for non-remote classic frames
-                    let! payload = takeSlice payloadLength
-
-                    return
-                        { BaseIdentifier = uint16 baseIdentifier
-                          IsExtendedFrame = isExtendedFrame
-                          IsRemoteTransmissionRequest = isRemoteTransmissionRequest
-                          DataLengthCode = uint8 dlc
-                          Payload = payload }
+                return
+                    { BaseIdentifier = uint16 baseIdentifier
+                      IsExtendedFrame = isExtendedFrame
+                      IsRemoteTransmissionRequest = isRemoteTransmissionRequest
+                      DataLengthCode = uint8 dlc
+                      Payload = payload }
         }

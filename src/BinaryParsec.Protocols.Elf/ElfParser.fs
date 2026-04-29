@@ -34,17 +34,23 @@ module internal ElfParser =
         | ElfDataEncoding.BigEndian -> u64be
         | _ -> invalidOp "Unsupported ELF data encodings are rejected before width reads."
 
-    let private parseClass rawClass position =
-        match rawClass with
-        | 1uy -> result ElfClass.Elf32
-        | 2uy -> result ElfClass.Elf64
-        | _ -> fail position $"ELF class {rawClass} is not supported by this package."
+    let private parseClass =
+        parse {
+            let! pos = Contiguous.position
+            let! rawClass = Contiguous.``byte``
+            if rawClass = 1uy then return ElfClass.Elf32
+            elif rawClass = 2uy then return ElfClass.Elf64
+            else return! fail pos $"ELF class {rawClass} is not supported by this package."
+        }
 
-    let private parseDataEncoding rawData position =
-        match rawData with
-        | 1uy -> result ElfDataEncoding.LittleEndian
-        | 2uy -> result ElfDataEncoding.BigEndian
-        | _ -> fail position $"ELF data encoding {rawData} is not supported by this package."
+    let private parseDataEncoding =
+        parse {
+            let! pos = Contiguous.position
+            let! rawData = Contiguous.``byte``
+            if rawData = 1uy then return ElfDataEncoding.LittleEndian
+            elif rawData = 2uy then return ElfDataEncoding.BigEndian
+            else return! fail pos $"ELF data encoding {rawData} is not supported by this package."
+        }
 
     let private headerFields elfClass dataEncoding =
         let readUInt16 = uint16ForEncoding dataEncoding
@@ -52,17 +58,12 @@ module internal ElfParser =
         let readUInt64 = uint64ForEncoding dataEncoding
 
         parse {
-            do! skip 2
-            do! map ignore readUInt16
-            do! map ignore readUInt32
-
             match elfClass with
             | ElfClass.Elf32 ->
-                let! entryPoint = readUInt32
+                do! skip 14 // Skip the remainder of e_ident plus e_type and e_machine.
+                let! entryPoint = skip 4 >>. readUInt32
                 let! programHeaderOffset = readUInt32
-                do! skip 4
-                do! skip 4
-                do! skip 2
+                let! _ = skip 10
                 let! programHeaderEntrySize = readUInt16
                 let! programHeaderEntryCount = readUInt16
 
@@ -74,11 +75,10 @@ module internal ElfParser =
                       ProgramHeaderEntrySize = programHeaderEntrySize
                       ProgramHeaderEntryCount = programHeaderEntryCount }
             | ElfClass.Elf64 ->
-                let! entryPoint = readUInt64
+                do! skip 10 // Skip the remainder of e_ident.
+                let! entryPoint = skip 8 >>. readUInt64
                 let! programHeaderOffset = readUInt64
-                do! skip 8
-                do! skip 4
-                do! skip 2
+                let! _ = skip 14
                 let! programHeaderEntrySize = readUInt16
                 let! programHeaderEntryCount = readUInt16
 
@@ -95,17 +95,10 @@ module internal ElfParser =
 
     let header =
         parse {
-            do! map ignore (expectBytes elfMagic "ELF magic mismatch.")
+            do! expectBytes elfMagic "ELF magic mismatch." |>> ignore
 
-            let! classPosition = position
-            let! rawClass = ``byte``
-            let! elfClass = parseClass rawClass classPosition
-
-            let! dataPosition = position
-            let! rawData = ``byte``
-            let! dataEncoding = parseDataEncoding rawData dataPosition
-
-            do! skip 10
+            let! elfClass = parseClass
+            let! dataEncoding = parseDataEncoding
 
             return! headerFields elfClass dataEncoding
         }
@@ -147,7 +140,7 @@ module internal ElfParser =
             invalidArg (nameof index) "Program-header index must be non-negative."
 
         parse {
-            let! currentPosition = position
+            let! currentPosition = Contiguous.position
 
             if int header.ProgramHeaderEntryCount <= index then
                 return!
@@ -175,7 +168,7 @@ module internal ElfParser =
     let file =
         parse {
             let! parsedHeader = header
-            let! currentPosition = position
+            let! currentPosition = Contiguous.position
 
             if parsedHeader.ProgramHeaderEntryCount = 0us then
                 return! fail currentPosition "ELF file does not contain a program header table."

@@ -2,6 +2,7 @@ namespace BinaryParsec.Protocols.Png
 
 open System
 open BinaryParsec
+open BinaryParsec.Syntax
 
 [<RequireQualifiedAccess>]
 module internal PngParser =
@@ -41,71 +42,70 @@ module internal PngParser =
 
         matches
 
-    let signature = Contiguous.expectBytes signatureBytes invalidSignatureMessage
+    let signature = expectBytes signatureBytes invalidSignatureMessage
 
     let chunkEnvelope =
         ContiguousParser<PngChunkEnvelope>(fun input position ->
-            match Contiguous.u32beAt input position with
+            match Contiguous.position.Invoke(input, position) with
             | Error error -> Error error
-            | Ok(struct (length, afterLength)) ->
-                match Contiguous.takeAt 4 input afterLength with
+            | Ok struct (pos, _) ->
+                match Contiguous.u32be.Invoke(input, position) with
                 | Error error -> Error error
-                | Ok(struct (chunkType, afterChunkType)) ->
-                    if length > maxSupportedChunkLength then
-                        Contiguous.failAt position invalidLengthMessage
-                    else
-                        match Contiguous.takeAt (int length) input afterChunkType with
-                        | Error error -> Error error
-                        | Ok(struct (payload, afterPayload)) ->
-                            match Contiguous.takeAt 4 input afterPayload with
+                | Ok struct (length, afterLength) ->
+                    match Contiguous.takeAt 4 input afterLength with
+                    | Error error -> Error error
+                    | Ok struct (chunkType, afterChunkType) ->
+                        if length > maxSupportedChunkLength then
+                            failAt pos invalidLengthMessage
+                        else
+                            match Contiguous.takeAt (int length) input afterChunkType with
                             | Error error -> Error error
-                            | Ok(struct (crc, nextPosition)) ->
-                                Ok(
-                                    struct (
-                                        { Length = length
-                                          ChunkType = chunkType
-                                          Payload = payload
-                                          Crc = crc },
-                                        nextPosition
-                                    )
-                                ))
+                            | Ok struct (payload, afterPayload) ->
+                                match Contiguous.takeAt 4 input afterPayload with
+                                | Error error -> Error error
+                                | Ok struct (crc, nextPosition) ->
+                                    Ok
+                                        struct (
+                                            { Length = length
+                                              ChunkType = chunkType
+                                              Payload = payload
+                                              Crc = crc },
+                                            nextPosition
+                                        ))
 
     let chunkStream =
         ContiguousParser<PngChunkStream>(fun input position ->
             match signature.Invoke(input, position) with
             | Error error -> Error error
-            | Ok(struct (parsedSignature, afterSignature)) ->
-                let chunks = ResizeArray<PngChunkEnvelope>()
-                let mutable current = afterSignature
+            | Ok struct (sigSlice, afterSignature) ->
+                let mutable currentPosition = afterSignature
                 let mutable finished = false
-                let mutable failure = ValueNone
+                let mutable failure = None
+                let chunks = ResizeArray<PngChunkEnvelope>()
 
-                while not finished && ValueOption.isNone failure do
-                    match chunkEnvelope.Invoke(input, current) with
+                while not finished && failure.IsNone do
+                    match chunkEnvelope.Invoke(input, currentPosition) with
                     | Error error ->
-                        failure <- ValueSome error
-                    | Ok(struct (chunk, nextPosition)) ->
-                        chunks.Add(chunk)
-                        current <- nextPosition
-                        finished <- chunkTypeMatches iendChunkTypeBytes input chunk.ChunkType
+                        failure <- Some error
+                    | Ok struct (envelope, nextPosition) ->
+                        chunks.Add envelope
+                        currentPosition <- nextPosition
+                        finished <- chunkTypeMatches iendChunkTypeBytes input envelope.ChunkType
 
                 match failure with
-                | ValueSome error -> Error error
-                | ValueNone ->
-                    Ok(
+                | Some error -> Error error
+                | None ->
+                    Ok
                         struct (
-                            { Signature = parsedSignature
+                            { Signature = sigSlice
                               Chunks = chunks.ToArray() },
-                            current
-                        )
-                    ))
+                            currentPosition
+                        ))
 
     let initialSlice =
-        Contiguous.parse {
-            let! parsedSignature = signature
-            and! firstChunk = chunkEnvelope
-
-            return
+        map2
+            (fun parsedSignature firstChunk ->
                 { Signature = parsedSignature
-                  FirstChunk = firstChunk }
-        }
+                  FirstChunk = firstChunk })
+            signature
+            chunkEnvelope

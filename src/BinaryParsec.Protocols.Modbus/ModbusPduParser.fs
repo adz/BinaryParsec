@@ -11,17 +11,8 @@ module internal ModbusPduParser =
         $"{transportName} exception response payload must contain exactly one exception code byte."
 
     let pdu : ContiguousParser<ModbusPduSlice> =
-        parse {
-            // PDU layout:
-            //   function code : 1 byte
-            //   payload       : N bytes
-            let! rawFunctionCode = ``byte``
-            let! payload = takeRemaining
-
-            return
-                { RawFunctionCode = rawFunctionCode
-                  Payload = payload }
-        }
+        ``byte`` .>>. takeRemaining
+        |>> fun (fc, p) -> { RawFunctionCode = fc; Payload = p }
 
     let materialize transportName (input: ReadOnlySpan<byte>) (offset: int) (slice: ModbusPduSlice) : ParseResult<ModbusPdu> =
         let isExceptionResponse = (slice.RawFunctionCode &&& 0x80uy) = 0x80uy
